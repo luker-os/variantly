@@ -1,0 +1,15 @@
+[package]
+authors = ["Luke Roberts <lukeroberts.j@gmail.com>"]
+edition = "2018"
+name = "variantly_derive"
+version = "0.1.0"
+[dependencies]
+Inflector = "*"
+quote = "*"
+
+[dependencies.syn]
+features = ["full"]
+version = "*"
+
+[lib]
+proc-macro = true
