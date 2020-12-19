@@ -47,7 +47,7 @@ pub fn variantly(input: TokenStream) -> TokenStream {
         };
     }
 
-    declare_idents! {is, ok, ok_or, ok_or_else, expect, contains, unwrap, unwrap_or, unwrap_or_else, is_not, or, or_else, get_or_insert_with, get_or_insert};
+    declare_idents! {is, ok, ok_or, ok_or_else, expect, contains, unwrap, unwrap_or, unwrap_or_else, is_not, or, or_else, get_or_insert_with, get_or_insert, replace};
 
     let result = quote! {
         #(
@@ -79,6 +79,10 @@ pub fn variantly(input: TokenStream) -> TokenStream {
 
                 fn #ok(self) -> Option<#types> {
                     variantly::ok!(self, #enm_name::#name)
+                }
+
+                fn #replace(&mut self, value: #types) -> #enm_name {
+                    variantly::replace!(self, #enm_name::#name, value)
                 }
 
                 fn #ok_or<E>(self, or: E) -> Result<#types, E> {

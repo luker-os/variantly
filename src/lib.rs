@@ -11,6 +11,20 @@ macro_rules! get_or_insert {
 }
 
 #[macro_export]
+macro_rules! replace {
+    ($enum:expr, $variant:path, $value:expr) => {
+        mem::replace(self, $variant(value))
+    };
+}
+
+#[macro_export]
+macro_rules! zip {
+    ($enum:expr, $variant:path, $value:expr) => {
+        mem::replace(self, $variant(value))
+    };
+}
+
+#[macro_export]
 macro_rules! get_or_insert_with {
     ($enum:expr, $variant:path, $with:tt) => {
         match *$enum {
