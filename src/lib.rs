@@ -41,9 +41,9 @@ macro_rules! expect {
 
 #[macro_export]
 macro_rules! is {
-    ($variant:path, $enum:expr) => {
+    ($variant_pattern:pat, $enum:expr) => {
         match $enum {
-            $variant(_) => true,
+            $variant_pattern => true,
             _ => false,
         }
     };
