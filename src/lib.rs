@@ -13,7 +13,7 @@ macro_rules! replace {
 }
 
 #[macro_export]
-macro_rules! or {
+macro_rules! and {
     ($a:expr, $b:expr, $variant:path) => {
         match (&$a, $b) {
             (&$variant(_), $variant(val)) => $variant(val),
@@ -23,11 +23,31 @@ macro_rules! or {
 }
 
 #[macro_export]
+macro_rules! and_then {
+    ($a:expr, $and_then:tt, $variant:path) => {
+        match $a {
+            $variant(value) => $variant($and_then(value)),
+            _ => $a,
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! or {
+    ($a:expr, $b:expr, $variant:path) => {
+        match $a {
+            $variant(val) => $variant(val),
+            _ => $b,
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! or_else {
     ($a:expr, $or_else:tt, $variant:path) => {
         match $a {
-            $variant(value) => $variant($or_else(value)),
-            _ => $a,
+            $variant(val) => $variant(val),
+            _ => $variant($or_else()),
         }
     };
 }
