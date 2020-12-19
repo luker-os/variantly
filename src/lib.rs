@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate variantly_derive;
 
 pub use variantly_derive::Variantly;
