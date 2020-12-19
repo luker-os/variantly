@@ -6,13 +6,6 @@ pub use variantly_derive::Variantly;
 // TODO ordering of `$variant:path` should be consistent in macro signatures
 
 #[macro_export]
-macro_rules! replace {
-    ($enum:expr, $variant:path, $value:expr) => {
-        std::mem::replace($enum, $variant($value))
-    };
-}
-
-#[macro_export]
 macro_rules! and {
     ($a:expr, $b:expr, $variant:path) => {
         match (&$a, $b) {
@@ -29,50 +22,6 @@ macro_rules! and_then {
             $variant(value) => $variant($and_then(value)),
             _ => $a,
         }
-    };
-}
-
-#[macro_export]
-macro_rules! or {
-    ($a:expr, $b:expr, $variant:path) => {
-        match $a {
-            $variant(val) => $variant(val),
-            _ => $b,
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! or_else {
-    ($a:expr, $or_else:tt, $variant:path) => {
-        match $a {
-            $variant(val) => $variant(val),
-            _ => $variant($or_else()),
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! unwrap_or_else {
-    ($enum:expr, $variant:path, $else:tt) => {
-        match $enum {
-            $variant(value) => value,
-            _ => $else(),
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! unwrap_or {
-    ($enum:expr, $variant:path, $or:expr) => {
-        variantly::unwrap_or_else!($enum, $variant, (|| $or))
-    };
-}
-
-#[macro_export]
-macro_rules! unwrap {
-    ($enum:expr, $variant:path) => {
-        variantly::unwrap_or_else!($enum, $variant, (|| panic!()))
     };
 }
 
@@ -104,6 +53,13 @@ macro_rules! is {
 }
 
 #[macro_export]
+macro_rules! replace {
+    ($enum:expr, $variant:path, $value:expr) => {
+        std::mem::replace($enum, $variant($value))
+    };
+}
+
+#[macro_export]
 macro_rules! ok {
     ($enum:expr, $variant:path) => {
         match $enum {
@@ -126,6 +82,50 @@ macro_rules! ok_or_else {
         match $enum {
             $variant(value) => Ok(value),
             _ => Err($else()),
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! or {
+    ($a:expr, $b:expr, $variant:path) => {
+        match $a {
+            $variant(val) => $variant(val),
+            _ => $b,
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! or_else {
+    ($a:expr, $or_else:tt, $variant:path) => {
+        match $a {
+            $variant(val) => $variant(val),
+            _ => $variant($or_else()),
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! unwrap {
+    ($enum:expr, $variant:path) => {
+        variantly::unwrap_or_else!($enum, $variant, (|| panic!()))
+    };
+}
+
+#[macro_export]
+macro_rules! unwrap_or {
+    ($enum:expr, $variant:path, $or:expr) => {
+        variantly::unwrap_or_else!($enum, $variant, (|| $or))
+    };
+}
+
+#[macro_export]
+macro_rules! unwrap_or_else {
+    ($enum:expr, $variant:path, $else:tt) => {
+        match $enum {
+            $variant(value) => value,
+            _ => $else(),
         }
     };
 }

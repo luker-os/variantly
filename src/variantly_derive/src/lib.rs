@@ -34,7 +34,7 @@ pub fn variantly(input: TokenStream) -> TokenStream {
 
     /// Helper for declaring Vec<Ident> based on snake_cased enum variant names and a given suffix.
     macro_rules! declare_idents {
-        ($($id:ident),*) => {
+        ($($id:ident),*,) => {
             $(
                 let name = stringify!($id);
                 let $id = variants
@@ -47,15 +47,26 @@ pub fn variantly(input: TokenStream) -> TokenStream {
         };
     }
 
-    declare_idents! {is, ok, ok_or, ok_or_else, expect, contains, unwrap, unwrap_or, unwrap_or_else, is_not, or, or_else, replace, and, and_then};
+    declare_idents! {
+        and_then,
+        and,
+        contains,
+        expect,
+        is_not, or,
+        is,
+        ok_or_else,
+        ok_or,
+        ok,
+        or_else,
+        replace,
+        unwrap_or_else,
+        unwrap_or,
+        unwrap,
+    };
 
     let result = quote! {
         #(
             impl #enm_name {
-
-                fn #or(self, other: #enm_name) -> #enm_name {
-                    variantly::or!(self, other, #enm_name::#name)
-                }
 
                 fn #and(self, other: #enm_name) -> #enm_name {
                     variantly::and!(self, other, #enm_name::#name)
@@ -63,10 +74,6 @@ pub fn variantly(input: TokenStream) -> TokenStream {
 
                 fn #and_then<F: FnOnce(#types) -> #types>(self, and_then: F) -> #enm_name {
                     variantly::and_then!(self, and_then, #enm_name::#name)
-                }
-
-                fn #or_else<F: FnOnce() -> #types>(self, or_else: F) -> #enm_name {
-                    variantly::or_else!(self, or_else, #enm_name::#name)
                 }
 
                 fn #contains(&self, x: &#types) -> bool {
@@ -89,9 +96,6 @@ pub fn variantly(input: TokenStream) -> TokenStream {
                     variantly::ok!(self, #enm_name::#name)
                 }
 
-                fn #replace(&mut self, value: #types) -> #enm_name {
-                    variantly::replace!(self, #enm_name::#name, value)
-                }
 
                 fn #ok_or<E>(self, or: E) -> Result<#types, E> {
                     variantly::ok_or!(self, #enm_name::#name, or    )
@@ -99,6 +103,18 @@ pub fn variantly(input: TokenStream) -> TokenStream {
 
                 fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<#types, E> {
                     variantly::ok_or_else!(self, #enm_name::#name, (or_else))
+                }
+
+                fn #or(self, other: #enm_name) -> #enm_name {
+                    variantly::or!(self, other, #enm_name::#name)
+                }
+
+                fn #or_else<F: FnOnce() -> #types>(self, or_else: F) -> #enm_name {
+                    variantly::or_else!(self, or_else, #enm_name::#name)
+                }
+
+                fn #replace(&mut self, value: #types) -> #enm_name {
+                    variantly::replace!(self, #enm_name::#name, value)
                 }
 
                 fn #unwrap(self) -> #types {
