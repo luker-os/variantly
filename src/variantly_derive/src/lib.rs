@@ -68,24 +68,24 @@ pub fn variantly(input: TokenStream) -> TokenStream {
         #(
             impl #enm_name {
 
-                fn #and(self, other: #enm_name) -> #enm_name {
-                    variantly::and!(self, other, #enm_name::#name)
+                fn #and(self, and: #enm_name) -> #enm_name {
+                    variantly::and!(#enm_name::#name, self, and)
                 }
 
                 fn #and_then<F: FnOnce(#types) -> #types>(self, and_then: F) -> #enm_name {
-                    variantly::and_then!(self, and_then, #enm_name::#name)
+                    variantly::and_then!(#enm_name::#name, self, and_then)
                 }
 
-                fn #contains(&self, x: &#types) -> bool {
-                    variantly::contains!(self, #enm_name::#name, x)
+                fn #contains(&self, target: &#types) -> bool {
+                    variantly::contains!(#enm_name::#name, self, target)
                 }
 
                 fn #expect(self, msg: &str) -> #types {
-                    variantly::expect!(self, #enm_name::#name, msg)
+                    variantly::expect!(#enm_name::#name, self, msg)
                 }
 
                 fn #is(&self) -> bool {
-                    variantly::is!(self, #enm_name::#name)
+                    variantly::is!(#enm_name::#name, self)
                 }
 
                 fn #is_not(&self) -> bool {
@@ -93,40 +93,40 @@ pub fn variantly(input: TokenStream) -> TokenStream {
                 }
 
                 fn #ok(self) -> Option<#types> {
-                    variantly::ok!(self, #enm_name::#name)
+                    variantly::ok!(#enm_name::#name, self)
                 }
 
 
                 fn #ok_or<E>(self, or: E) -> Result<#types, E> {
-                    variantly::ok_or!(self, #enm_name::#name, or    )
+                    variantly::ok_or!(#enm_name::#name, self, or)
                 }
 
                 fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<#types, E> {
-                    variantly::ok_or_else!(self, #enm_name::#name, (or_else))
+                    variantly::ok_or_else!(#enm_name::#name, self, (or_else))
                 }
 
-                fn #or(self, other: #enm_name) -> #enm_name {
-                    variantly::or!(self, other, #enm_name::#name)
+                fn #or(self, or: #enm_name) -> #enm_name {
+                    variantly::or!(#enm_name::#name, self, or)
                 }
 
                 fn #or_else<F: FnOnce() -> #types>(self, or_else: F) -> #enm_name {
-                    variantly::or_else!(self, or_else, #enm_name::#name)
+                    variantly::or_else!(#enm_name::#name, self, or_else)
                 }
 
                 fn #replace(&mut self, value: #types) -> #enm_name {
-                    variantly::replace!(self, #enm_name::#name, value)
+                    variantly::replace!(#enm_name::#name, self, value)
                 }
 
                 fn #unwrap(self) -> #types {
-                    variantly::unwrap!(self, #enm_name::#name)
+                    variantly::unwrap!(#enm_name::#name, self)
                 }
 
                 fn #unwrap_or(self, or: #types) -> #types {
-                    variantly::unwrap_or!(self, #enm_name::#name, or)
+                    variantly::unwrap_or!(#enm_name::#name, self, or)
                 }
 
                 fn #unwrap_or_else(self, or_else: fn() -> #types) -> #types { // TODO should this be FnOnce
-                    variantly::unwrap_or_else!(self, #enm_name::#name, (or_else))
+                    variantly::unwrap_or_else!(#enm_name::#name, self, (or_else))
                 }
             }
         )*

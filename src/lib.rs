@@ -3,31 +3,29 @@ extern crate variantly_derive;
 
 pub use variantly_derive::Variantly;
 
-// TODO ordering of `$variant:path` should be consistent in macro signatures
-
 #[macro_export]
 macro_rules! and {
-    ($a:expr, $b:expr, $variant:path) => {
-        match (&$a, $b) {
+    ($variant:path, $enum_a:expr, $enum_b:expr) => {
+        match (&$enum_a, $enum_b) {
             (&$variant(_), $variant(val)) => $variant(val),
-            _ => $a,
+            _ => $enum_a,
         }
     };
 }
 
 #[macro_export]
 macro_rules! and_then {
-    ($a:expr, $and_then:tt, $variant:path) => {
-        match $a {
+    ($variant:path, $enum:expr, $and_then:tt) => {
+        match $enum {
             $variant(value) => $variant($and_then(value)),
-            _ => $a,
+            _ => $enum,
         }
     };
 }
 
 #[macro_export]
 macro_rules! contains {
-    ($enum:expr, $variant:path, $target:expr) => {
+    ($variant:path, $enum:expr, $target:expr) => {
         match $enum {
             $variant(value) => value == $target,
             _ => false,
@@ -37,14 +35,14 @@ macro_rules! contains {
 
 #[macro_export]
 macro_rules! expect {
-    ($enum:expr, $variant:path, $msg:expr) => {
-        variantly::unwrap_or_else!($enum, $variant, (|| panic!("{}", $msg)))
+    ($variant:path, $enum:expr, $msg:expr) => {
+        variantly::unwrap_or_else!($variant, $enum, (|| panic!("{}", $msg)))
     };
 }
 
 #[macro_export]
 macro_rules! is {
-    ($enum:expr, $variant:path) => {
+    ($variant:path, $enum:expr) => {
         match $enum {
             $variant(_) => true,
             _ => false,
@@ -54,14 +52,14 @@ macro_rules! is {
 
 #[macro_export]
 macro_rules! replace {
-    ($enum:expr, $variant:path, $value:expr) => {
+    ($variant:path, $enum:expr, $value:expr) => {
         std::mem::replace($enum, $variant($value))
     };
 }
 
 #[macro_export]
 macro_rules! ok {
-    ($enum:expr, $variant:path) => {
+    ($variant:path, $enum:expr) => {
         match $enum {
             $variant(value) => Some(value),
             _ => None,
@@ -71,14 +69,14 @@ macro_rules! ok {
 
 #[macro_export]
 macro_rules! ok_or {
-    ($enum:expr, $variant:path, $err:expr) => {
-        variantly::ok_or_else!($enum, $variant, (|| $err))
+    ($variant:path, $enum:expr, $err:expr) => {
+        variantly::ok_or_else!($variant, $enum, (|| $err))
     };
 }
 
 #[macro_export]
 macro_rules! ok_or_else {
-    ($enum:expr, $variant:path, $else:tt) => {
+    ($variant:path, $enum:expr, $else:tt) => {
         match $enum {
             $variant(value) => Ok(value),
             _ => Err($else()),
@@ -88,18 +86,18 @@ macro_rules! ok_or_else {
 
 #[macro_export]
 macro_rules! or {
-    ($a:expr, $b:expr, $variant:path) => {
-        match $a {
+    ($variant:path, $enum_a:expr, $enum_b:expr) => {
+        match $enum_a {
             $variant(val) => $variant(val),
-            _ => $b,
+            _ => $enum_b,
         }
     };
 }
 
 #[macro_export]
 macro_rules! or_else {
-    ($a:expr, $or_else:tt, $variant:path) => {
-        match $a {
+    ($variant:path, $enum:expr, $or_else:tt) => {
+        match $enum {
             $variant(val) => $variant(val),
             _ => $variant($or_else()),
         }
@@ -108,21 +106,21 @@ macro_rules! or_else {
 
 #[macro_export]
 macro_rules! unwrap {
-    ($enum:expr, $variant:path) => {
-        variantly::unwrap_or_else!($enum, $variant, (|| panic!()))
+    ($variant:path, $enum:expr) => {
+        variantly::unwrap_or_else!($variant, $enum, (|| panic!()))
     };
 }
 
 #[macro_export]
 macro_rules! unwrap_or {
-    ($enum:expr, $variant:path, $or:expr) => {
-        variantly::unwrap_or_else!($enum, $variant, (|| $or))
+    ($variant:path, $enum:expr, $or:expr) => {
+        variantly::unwrap_or_else!($variant, $enum, (|| $or))
     };
 }
 
 #[macro_export]
 macro_rules! unwrap_or_else {
-    ($enum:expr, $variant:path, $else:tt) => {
+    ($variant:path, $enum:expr, $else:tt) => {
         match $enum {
             $variant(value) => value,
             _ => $else(),
