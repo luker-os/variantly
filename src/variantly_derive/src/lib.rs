@@ -47,7 +47,7 @@ pub fn variantly(input: TokenStream) -> TokenStream {
         };
     }
 
-    declare_idents! {is, ok, ok_or, ok_or_else, expect, contains, unwrap, unwrap_or, unwrap_or_else, is_not, or, or_else, get_or_insert_with, get_or_insert, replace};
+    declare_idents! {is, ok, ok_or, ok_or_else, expect, contains, unwrap, unwrap_or, unwrap_or_else, is_not, or, or_else, replace};
 
     let result = quote! {
         #(
@@ -91,14 +91,6 @@ pub fn variantly(input: TokenStream) -> TokenStream {
 
                 fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<#types, E> {
                     variantly::ok_or_else!(self, #enm_name::#name, (or_else))
-                }
-                
-                fn #get_or_insert_with<F: FnOnce() -> #types>(&mut self, with: F) -> &mut #types {
-                    variantly::get_or_insert_with!(self, #enm_name::#name, (with))
-                }
-
-                fn #get_or_insert(&mut self, value: #types) -> &mut #types {
-                    variantly::get_or_insert!(self, #enm_name::#name, value)
                 }
 
                 fn #unwrap(self) -> #types {

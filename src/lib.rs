@@ -3,29 +3,12 @@ extern crate variantly_derive;
 
 pub use variantly_derive::Variantly;
 
-// TODO `self` usage limits usability of these. Can that be avoided?
-
-#[macro_export]
-macro_rules! get_or_insert {
-    ($enum:expr, $variant:path, $value:expr) => {
-        variantly::get_or_insert_with!($enum, $variant, || $value)
-    };
-}
+// TODO ordering of `$variant:path` should be consistent in macro signatures
 
 #[macro_export]
 macro_rules! replace {
     ($enum:expr, $variant:path, $value:expr) => {
-        mem::replace(self, $variant(value))
-    };
-}
-
-#[macro_export]
-macro_rules! get_or_insert_with {
-    ($enum:expr, $variant:path, $with:tt) => {
-        match *$enum {
-            $variant(ref mut value) => value,
-            _ => *self = $variant(with()),
-        }
+        std::mem::replace($enum, $variant($value))
     };
 }
 
