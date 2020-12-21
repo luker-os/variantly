@@ -10,20 +10,21 @@ pub fn collect_parsed_idents(variants: &Vec<Variant>, prefix: &str) -> Vec<Ident
         .collect()
 }
 
-/// Iterate over a vec of variants and collect the ident of each as-is.
-pub fn collect_idents_by_valueness(variants: &Vec<Variant>) -> (Vec<Ident>, Vec<Ident>) {
-    let mut a: Vec<Ident> = vec![];
-    let mut b: Vec<Ident> = vec![];
+/// Iterate over a vec of variants and collect the ident of each as-is, categorized by the type of enum variant (named, unnamed or unit).
+pub fn collect_idents_by_valueness(variants: &Vec<Variant>) -> (Vec<Ident>, Vec<Ident>, Vec<Ident>) {
+    let mut named: Vec<Ident> = vec![];
+    let mut unnamed: Vec<Ident> = vec![];
+    let mut unit: Vec<Ident> = vec![];
     variants.iter().for_each(|variant| {
-        if let syn::Fields::Unnamed(_) = variant.fields {
-            // TODO matches!
-            a.push(variant.ident.clone());
-        } else {
-            b.push(variant.ident.clone());
+
+        match variant.fields {
+            syn::Fields::Unnamed(_) => named.push(variant.ident.clone()),
+            syn::Fields::Named(_) => unnamed.push(variant.ident.clone()),
+            _ => unit.push(variant.ident.clone())
         }
     });
 
-    (a, b)
+    (named, unnamed, unit)
 }
 
 /// Iterate over and collect the variants contained by an ItemEnum
@@ -49,17 +50,19 @@ pub fn collect_variant_types(variants: &Vec<Variant>) -> Vec<Punctuated<Field, C
         .collect()
 }
 
-pub fn split_variants_by_valueness(variants: &Vec<Variant>) -> (Vec<Variant>, Vec<Variant>) {
-    let mut a: Vec<Variant> = vec![];
-    let mut b: Vec<Variant> = vec![];
+/// Iterate over a vec of variants and clone each element into a vec categorized by variant type (named, unnamed or unit).
+pub fn split_variants_by_valueness(variants: &Vec<Variant>) -> (Vec<Variant>, Vec<Variant>, Vec<Variant>) {
+    let mut named: Vec<Variant> = vec![];
+    let mut unnamed: Vec<Variant> = vec![];
+    let mut unit: Vec<Variant> = vec![];
     variants.iter().for_each(|variant| {
-        if let syn::Fields::Unnamed(_) = variant.fields {
-            // TODO matches!
-            a.push(variant.clone());
-        } else {
-            b.push(variant.clone());
+
+        match variant.fields {
+            syn::Fields::Unnamed(_) => named.push(variant.clone()),
+            syn::Fields::Named(_) => unnamed.push(variant.clone()),
+            _ => unit.push(variant.clone())
         }
     });
 
-    (a, b)
+    (named, unnamed, unit)
 }
