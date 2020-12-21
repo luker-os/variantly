@@ -59,7 +59,6 @@ pub fn variantly(input: TokenStream) -> TokenStream {
         [
             and_then,
             and,
-            contains,
             expect,
             is_not,
             is,
@@ -95,10 +94,6 @@ pub fn variantly(input: TokenStream) -> TokenStream {
 
                 fn #and_then<F: FnOnce(#r#type) -> #r#type>(self, and_then: F) -> #enum_name {
                     variantly::and_then!(#enum_name::#valued_name, self, and_then)
-                }
-
-                fn #contains(&self, target: &#r#type) -> bool {
-                    variantly::contains!(#enum_name::#valued_name, self, target)
                 }
 
                 fn #expect(self, msg: &str) -> #r#type {

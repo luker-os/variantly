@@ -23,16 +23,6 @@ macro_rules! and_then {
 }
 
 #[macro_export]
-macro_rules! contains {
-    ($variant:path, $enum:expr, $target:expr) => {
-        match $enum {
-            $variant(value) => value == $target,
-            _ => false,
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! expect {
     ($variant:path, $enum:expr, $msg:expr) => {
         variantly::unwrap_or_else!($variant, $enum, (|| panic!("{}", $msg)))
