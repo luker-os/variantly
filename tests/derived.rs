@@ -6,11 +6,14 @@ enum TestEnum {
     B(String),
     C(String),
     D(u128),
-    // E(String, u128), TODO
     #[allow(dead_code)]
+    // Included to validate that struct-like enums variants do not cause compilation issues.
     E {
         value: u128,
     },
+    #[allow(dead_code)]
+    // Included to validate that multi value tuple enum variants do not cause compilation issues.
+    F(String, u128, String), // TODO, shouldn't this be more supported?
 }
 
 #[test]

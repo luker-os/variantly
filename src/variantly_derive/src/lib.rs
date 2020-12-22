@@ -23,8 +23,9 @@ pub fn variantly(input: TokenStream) -> TokenStream {
     let variants: Vec<Variant> = collect_variants(&r#enum);
     let r#type: Vec<Punctuated<Field, Comma>> = collect_variant_types(&variants);
 
-    let (unnamed, named, unit) = split_variants_by_valueness(&variants);
-    let (unnamed_name, named_name, unit_name) = collect_idents_by_valueness(&variants);
+    let (unnamed_single, unnamed_multi, named, unit) = split_variants_by_valueness(&variants);
+    let (unnamed_single_name, unnamed_multi_name, named_name, unit_name) =
+        collect_idents_by_valueness(&variants);
 
     /// Helper for declaring Vec<Ident> based on snake_cased enum variant names and a given suffix.
     macro_rules! declare_idents {
@@ -82,9 +83,33 @@ pub fn variantly(input: TokenStream) -> TokenStream {
         )*
     };
 
+    declare_idents! {
+        variants = unnamed_multi,
+        [
+            is_not,
+            is,
+        ]
+    };
+
+    let unnamed_multi_impls = quote! {
+        // Repeat the following for each enum variant
+        #(
+            impl #enum_name {
+
+                fn #is(&self) -> bool {
+                    variantly::is!(#enum_name::#unnamed_multi_name(..), self)
+                }
+
+                fn #is_not(&self) -> bool {
+                    !self.#is()
+                }
+            }
+        )*
+    };
+
     // Declare all necessary Vec<Ident> variables
     declare_idents! {
-        variants = unnamed,
+        variants = unnamed_single,
         [
             and_then,
             and,
@@ -104,13 +129,13 @@ pub fn variantly(input: TokenStream) -> TokenStream {
     };
 
     // The following are only relevant if the enum variant contains a value.
-    let unnamed_impls = quote! {
+    let unnamed_single_impls = quote! {
         // Repeat the following for each enum variant
         #(
             impl #enum_name {
 
                 fn #is(&self) -> bool {
-                    variantly::is!(#enum_name::#unnamed_name(_), self)
+                    variantly::is!(#enum_name::#unnamed_single_name(_), self)
                 }
 
                 fn #is_not(&self) -> bool {
@@ -118,58 +143,59 @@ pub fn variantly(input: TokenStream) -> TokenStream {
                 }
 
                 fn #and(self, and: #enum_name) -> #enum_name {
-                    variantly::and!(#enum_name::#unnamed_name, self, and)
+                    variantly::and!(#enum_name::#unnamed_single_name, self, and)
                 }
 
                 fn #and_then<F: FnOnce(#r#type) -> #r#type>(self, and_then: F) -> #enum_name {
-                    variantly::and_then!(#enum_name::#unnamed_name, self, and_then)
+                    variantly::and_then!(#enum_name::#unnamed_single_name, self, and_then)
                 }
 
                 fn #expect(self, msg: &str) -> #r#type {
-                    variantly::expect!(#enum_name::#unnamed_name, self, msg)
+                    variantly::expect!(#enum_name::#unnamed_single_name, self, msg)
                 }
 
                 fn #ok(self) -> Option<#r#type> {
-                    variantly::ok!(#enum_name::#unnamed_name, self)
+                    variantly::ok!(#enum_name::#unnamed_single_name, self)
                 }
 
                 fn #ok_or<E>(self, or: E) -> Result<#r#type, E> {
-                    variantly::ok_or!(#enum_name::#unnamed_name, self, or)
+                    variantly::ok_or!(#enum_name::#unnamed_single_name, self, or)
                 }
 
                 fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<#r#type, E> {
-                    variantly::ok_or_else!(#enum_name::#unnamed_name, self, (or_else))
+                    variantly::ok_or_else!(#enum_name::#unnamed_single_name, self, (or_else))
                 }
 
                 fn #or(self, or: #enum_name) -> #enum_name {
-                    variantly::or!(#enum_name::#unnamed_name, self, or)
+                    variantly::or!(#enum_name::#unnamed_single_name, self, or)
                 }
 
                 fn #or_else<F: FnOnce() -> #r#type>(self, or_else: F) -> #enum_name {
-                    variantly::or_else!(#enum_name::#unnamed_name, self, or_else)
+                    variantly::or_else!(#enum_name::#unnamed_single_name, self, or_else)
                 }
 
                 fn #replace(&mut self, value: #r#type) -> #enum_name {
-                    variantly::replace!(#enum_name::#unnamed_name, self, value)
+                    variantly::replace!(#enum_name::#unnamed_single_name, self, value)
                 }
 
                 fn #unwrap(self) -> #r#type {
-                    variantly::unwrap!(#enum_name::#unnamed_name, self)
+                    variantly::unwrap!(#enum_name::#unnamed_single_name, self)
                 }
 
                 fn #unwrap_or(self, or: #r#type) -> #r#type {
-                    variantly::unwrap_or!(#enum_name::#unnamed_name, self, or)
+                    variantly::unwrap_or!(#enum_name::#unnamed_single_name, self, or)
                 }
 
                 fn #unwrap_or_else<F: FnOnce() -> #r#type>(self, or_else: F) -> #r#type {
-                    variantly::unwrap_or_else!(#enum_name::#unnamed_name, self, (or_else))
+                    variantly::unwrap_or_else!(#enum_name::#unnamed_single_name, self, (or_else))
                 }
             }
         )*
     };
 
     let impls = quote! {
-        #unnamed_impls
+        #unnamed_single_impls
+        #unnamed_multi_impls
         #named_impls
         #unit_variants
     }
