@@ -8,7 +8,9 @@ use syn::{parse_macro_input, Fields, FieldsUnnamed, Ident, ItemEnum};
 pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
     // parse necessary information from input
     let item_enum = parse_macro_input!(input as ItemEnum);
-    let enum_name = format_ident!("{}", item_enum.ident.to_string());
+    let enum_name = &item_enum.ident;
+    let generics = &item_enum.generics;
+    let where_clause = &generics.where_clause;
 
     // For collecting impl functions
     let mut functions = vec![];
@@ -46,7 +48,7 @@ pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
 
     // Declare the actual impl block & iterate over all include fns.
     let output: TokenStream = quote! {
-        impl #enum_name {
+        impl#generics #enum_name#generics #where_clause {
             #(#functions)*
         }
     }
@@ -96,14 +98,14 @@ fn handle_unnamed(
 
     // Create and push actual impl functions
     functions.push(quote! {
-        pub fn #and(self, and: #enum_name) -> #enum_name {
+        pub fn #and(self, and: Self) -> Self {
             match (&self, and) {
                 (&#variant(..), #var_pattern) => #var_pattern,
                 _ => self
             }
         }
 
-        pub fn #and_then<F: FnOnce((#types)) -> (#types)>(self, and_then: F) -> #enum_name {
+        pub fn #and_then<F: FnOnce((#types)) -> (#types)>(self, and_then: F) -> Self {
             match self {
                 #var_pattern => {
                     let #vars = and_then(#vars);
@@ -135,14 +137,14 @@ fn handle_unnamed(
             }
         }
 
-        pub fn #or(self, or: #enum_name) -> #enum_name {
+        pub fn #or(self, or: Self) -> Self {
             match self {
                 #var_pattern => #var_pattern,
                 _ => or,
             }
         }
 
-        pub fn #or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> #enum_name {
+        pub fn #or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> Self {
             match self {
                 #var_pattern => #var_pattern,
                 _ => {
