@@ -169,7 +169,6 @@ macro_rules! expect {
 /// ```
 #[macro_export]
 macro_rules! is {
-    // TODO, this can be simplified by using the tt pattern applied in other macros.
     ($variant_pattern:pat, $enum:expr) => {
         match $enum {
             $variant_pattern => true,

@@ -5,40 +5,99 @@
 
 extern crate proc_macro;
 
-mod parse_input;
+#[macro_use]
+mod idents;
 
+use idents::generate_idents;
 use inflector::cases::snakecase::to_snake_case;
-use parse_input::generate_idents;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, Fields, FieldsUnnamed, Ident, ItemEnum};
 
-macro_rules! identify {
-    ($funcs: expr, $ident:expr, ($($operation:ident$(,)*)*), $($tt:tt)*) => {
-        $(
-            let $operation = format_ident!(
-                "{}_{}",
-                stringify!($operation),
-                to_snake_case(&$ident.to_string())
-            );
-        )*
-        $funcs.push(quote! { $($tt)* });
-    };
+#[proc_macro_derive(Variantly)]
+pub fn variantly(input: TokenStream) -> TokenStream {
+    // parse necessary information from input
+    let r#enum = parse_macro_input!(input as ItemEnum);
+    let enum_name = format_ident!("{}", r#enum.ident.to_string());
+
+    // For collecting impl functions
+    let mut functions = vec![];
+
+    r#enum.variants.iter().for_each(|variant| {
+        let ident = &variant.ident;
+        // This will be initialized with a tokenstream representing how to match & ignore any variables held by a variant.
+        let ignore;
+
+        // variant-type specific logic
+        match &variant.fields {
+            Fields::Unnamed(fields) => {
+                handle_unnamed(fields, &ident, &mut functions, &enum_name);
+                ignore = quote!((..));
+            }
+            Fields::Named(_) => ignore = quote!({ .. }),
+            Fields::Unit => ignore = quote!(),
+        }
+
+        // include any impl functions that are common to all variant types.
+        identify!(ident, [is, is_not]);
+        functions.push(quote! {
+            fn #is(&self) -> bool {
+                variantly::is!(#enum_name::#ident#ignore, self)
+            }
+
+            fn #is_not(&self) -> bool {
+                !self.#is()
+            }
+        });
+    });
+
+    // Declare the actual impl block & iterate over all include fns.
+    let output: TokenStream = quote! {
+        impl #enum_name {
+            #(#functions)*
+        }
+    }
+    .into();
+
+    // println!("outputs: {}", output.to_string());
+
+    output
 }
 
+/// Construct all impl functions related to variants with unnamed internal variables and add them to the functions vec.
 fn handle_unnamed(
     fields: &FieldsUnnamed,
     ident: &Ident,
-    funcs: &mut Vec<TokenStream2>,
+    functions: &mut Vec<TokenStream2>,
     enum_name: &Ident,
 ) {
+    // parse necessary information from fields.
     let r#type = &fields.unnamed;
     let vars = generate_idents(r#type.len());
     let vars = quote! { (#( #vars ),*)};
     let r#type = quote! { #r#type };
 
-    identify!(funcs, ident, (and_then, and, expect, ok_or_else, ok_or, ok, or_else, or, unwrap_or_else, unwrap_or, unwrap),
+    // declare ident variables with helper macro.
+    identify!(
+        ident,
+        [
+            and_then,
+            and,
+            expect,
+            ok_or_else,
+            ok_or,
+            ok,
+            or_else,
+            or,
+            unwrap_or_else,
+            unwrap_or,
+            unwrap
+        ]
+    );
+
+    // Create and push actual impl functions
+    functions.push(quote! {
         fn #and(self, and: #enum_name) -> #enum_name {
             variantly::and!(#enum_name::#ident, self, and, #vars)
         }
@@ -82,47 +141,5 @@ fn handle_unnamed(
         fn #unwrap_or_else<F: FnOnce() -> (#r#type)>(self, or_else: F) -> (#r#type) {
             variantly::unwrap_or_else!(#enum_name::#ident, self, (or_else), #vars)
         }
-    );
-}
-
-#[proc_macro_derive(Variantly)]
-pub fn variantly(input: TokenStream) -> TokenStream {
-    // parse necessary information from input
-    let r#enum = parse_macro_input!(input as ItemEnum);
-    let enum_name = format_ident!("{}", r#enum.ident.to_string());
-
-    let mut funcs = vec![];
-
-    r#enum.variants.iter().for_each(|variant| {
-        let ident = &variant.ident;
-        let ignore;
-        match &variant.fields {
-            Fields::Unnamed(fields) => {
-                handle_unnamed(fields, &ident, &mut funcs, &enum_name);
-                ignore = quote!((..));
-            }
-            Fields::Named(_) => ignore = quote!({ .. }),
-            Fields::Unit => ignore = quote!(),
-        }
-
-        identify!(funcs, ident, (is, is_not),
-            fn #is(&self) -> bool {
-                variantly::is!(#enum_name::#ident#ignore, self)
-            }
-
-            fn #is_not(&self) -> bool {
-                !self.#is()
-            }
-        );
     });
-    let output: TokenStream = quote! {
-        impl #enum_name {
-            #(#funcs)*
-        }
-    }
-    .into();
-
-    // println!("outputs: {}", output.to_string());
-
-    output
 }

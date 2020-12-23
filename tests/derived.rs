@@ -12,9 +12,8 @@ enum TestEnum {
         value: u128,
     },
     #[allow(dead_code)]
-    F(String, u128, String), // TODO, shouldn't this be more supported?
+    F(String, u128, String),
 }
-
 
 #[test]
 fn it_derives_working_and() {
