@@ -14,8 +14,14 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, Fields, FieldsUnnamed, Ident, ItemEnum};
 
+/// This export should not be used directly and should instead be imported from the variantly crate.
+/// Derive convenience functions that are familiar from Result and Option for other enums.
 #[proc_macro_derive(Variantly)]
 pub fn variantly(input: TokenStream) -> TokenStream {
+    derive_variantly_fns(input)
+}
+
+fn derive_variantly_fns(input: TokenStream) -> TokenStream {
     // parse necessary information from input
     let r#enum = parse_macro_input!(input as ItemEnum);
     let enum_name = format_ident!("{}", r#enum.ident.to_string());
