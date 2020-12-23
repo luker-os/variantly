@@ -9,7 +9,6 @@ extern crate proc_macro;
 mod idents;
 
 use idents::generate_idents;
-use inflector::cases::snakecase::to_snake_case;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};

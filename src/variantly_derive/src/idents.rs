@@ -5,8 +5,20 @@ use uuid::Uuid;
 
 /// Declare a series of vars named by `operation` that contain an ident created
 /// by concatenating the stringified `operation`, and the passed in `ident`.
+/// # Examples
+/// ```
+/// let foo = format_ident!("{}", "foo");
+/// identify!(foo, [get, and]);
+/// // Expands to:
+/// let get = format_ident!("{}_{}", stringify!(get), to_snake_case(&foo.to_string()));
+/// let and = format_ident!("{}_{}", stringify!(and), to_snake_case(&foo.to_string()));
+/// // Which results in:
+/// assert_eq!(get.to_string(), "get_foo");
+/// assert_eq!(and.to_string(), "and_foo");
+/// ```
 macro_rules! identify {
     ($ident:expr, [$($operation:ident$(,)*)*]) => {
+        use inflector::cases::snakecase::to_snake_case;
         $(
             let $operation = format_ident!(
                 "{}_{}",
