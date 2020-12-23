@@ -31,14 +31,14 @@ pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
         // include any impl functions that are common to all variant types.
         identify!(ident, [is, is_not]);
         functions.push(quote! {
-            fn #is(&self) -> bool {
+            pub fn #is(&self) -> bool {
                 match self {
                     #enum_name::#ident#ignore => true,
                     _ => false
                 }
             }
 
-            fn #is_not(&self) -> bool {
+            pub fn #is_not(&self) -> bool {
                 !self.#is()
             }
         });
@@ -96,14 +96,14 @@ fn handle_unnamed(
 
     // Create and push actual impl functions
     functions.push(quote! {
-        fn #and(self, and: #enum_name) -> #enum_name {
+        pub fn #and(self, and: #enum_name) -> #enum_name {
             match (&self, and) {
                 (&#variant(..), #var_pattern) => #var_pattern,
                 _ => self
             }
         }
 
-        fn #and_then<F: FnOnce((#types)) -> (#types)>(self, and_then: F) -> #enum_name {
+        pub fn #and_then<F: FnOnce((#types)) -> (#types)>(self, and_then: F) -> #enum_name {
             match self {
                 #var_pattern => {
                     let #vars = and_then(#vars);
@@ -113,36 +113,36 @@ fn handle_unnamed(
             }
         }
 
-        fn #expect(self, msg: &str) -> (#types) {
+        pub fn #expect(self, msg: &str) -> (#types) {
             self.#unwrap_or_else(|| panic!("{}", msg))
         }
 
-        fn #ok(self) -> Option<(#types)> { // TODO: Verify this is ok for single var enums
+        pub fn #ok(self) -> Option<(#types)> { // TODO: Verify this is ok for single var enums
             match self {
                 #var_pattern => Some((#vars)),
                 _ => None,
             }
         }
 
-        fn #ok_or<E>(self, or: E) -> Result<(#types), E> {
+        pub fn #ok_or<E>(self, or: E) -> Result<(#types), E> {
             self.#ok_or_else(|| or)
         }
 
-        fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
+        pub fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
             match self {
                 #var_pattern => Ok((#vars)),
                 _ => Err(or_else())
             }
         }
 
-        fn #or(self, or: #enum_name) -> #enum_name {
+        pub fn #or(self, or: #enum_name) -> #enum_name {
             match self {
                 #var_pattern => #var_pattern,
                 _ => or,
             }
         }
 
-        fn #or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> #enum_name {
+        pub fn #or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> #enum_name {
             match self {
                 #var_pattern => #var_pattern,
                 _ => {
@@ -152,15 +152,15 @@ fn handle_unnamed(
             }
         }
 
-        fn #unwrap(self) -> (#types) {
+        pub fn #unwrap(self) -> (#types) {
             self.#unwrap_or_else(|| panic!())
         }
 
-        fn #unwrap_or(self, or: (#types)) -> (#types) {
+        pub fn #unwrap_or(self, or: (#types)) -> (#types) {
             self.#unwrap_or_else(|| or)
         }
 
-        fn #unwrap_or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> (#types) {
+        pub fn #unwrap_or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> (#types) {
             match self {
                 #var_pattern => (#vars),
                 _ => or_else()
