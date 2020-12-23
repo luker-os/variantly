@@ -9,34 +9,57 @@ pub use variantly_derive::Variantly;
 /// * `variant` - An enum variant
 /// * `enum_a` - An instance of an enum of the same base type as `variant`
 /// * `enum_b` - An instance of an enum of the same base type as `variant`
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
 /// #[derive(Debug, PartialEq, Copy, Clone)]
-/// enum Temperature {
-///     C(u32),
-///     F(u32),
-///     K(u32),
+/// enum Location {
+///     Coord(u32, u32),
+///     ID(u32),
+///     Unknown
 /// }
-///
-/// let temp_a = Temperature::F(32);
-/// let temp_b = Temperature::F(212);
+/// //  Multi-Variable
+/// let location_a = Location::Coord(123, 456);
+/// let location_b = Location::Coord(456, 789);
+/// //  If both match the intended variant, the second is returned.
 /// assert_eq!(
-///     variantly::and!(Temperature::F, temp_a, temp_b),
-///     temp_b
+///     variantly::and!(Location::Coord, location_a, location_b, (a, b)),
+///     location_b
 /// );
 ///
-/// let temp_c = Temperature::C(100);
+/// let location_unknown = Location::Unknown;
+/// //  Otherwise, the first is returned.
 /// assert_eq!(
-///     variantly::and!(Temperature::F, temp_a, temp_c),
-///     temp_a
+///     variantly::and!(Location::Coord, location_a, location_unknown, (a, b)),
+///     location_a
 /// );
+///
+/// // Single-Variable
+/// let location_c = Location::ID(1);
+/// let location_d = Location::ID(2);
+/// assert_eq!(
+///     variantly::and!(Location::ID, location_c, location_d, (a)),
+///     location_d
+/// );
+///
+/// assert_eq!(
+///     variantly::and!(Location::ID, location_c, location_unknown, (a)),
+///     location_c
+/// );
+///
+/// // If neither match, the first variant is returned.
+/// assert_eq!(
+///     variantly::and!(Location::Coord, location_c, location_unknown, (a, b)),
+///     location_c
+/// );
+///
 /// ```
 #[macro_export]
 macro_rules! and {
-    ($variant:path, $enum_a:expr, $enum_b:expr) => {
+    ($variant:path, $enum_a:expr, $enum_b:expr, ($($vars:tt),*)) => {
         match (&$enum_a, $enum_b) {
-            (&$variant(_), $variant(val)) => $variant(val),
+            (&$variant(..), $variant($($vars),*)) => $variant($($vars),*),
             _ => $enum_a,
         }
     };
@@ -49,6 +72,7 @@ macro_rules! and {
 /// * `variant` - An enum variant
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `and_then` - A function that accepts and returns a value of the same type as the inner value of the passed in enum variant
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -61,18 +85,21 @@ macro_rules! and {
 ///
 /// let temp_a = Temperature::F(32);
 /// let f_boil = |value| value + 180;
-/// let temp_a = variantly::and_then!(Temperature::F, temp_a, f_boil);
+/// let temp_a = variantly::and_then!(Temperature::F, temp_a, f_boil, (a));
 /// assert_eq!(temp_a, Temperature::F(212));
 ///
 /// let temp_b = Temperature::C(0);
-/// let temp_b = variantly::and_then!(Temperature::F, temp_b, f_boil);
+/// let temp_b = variantly::and_then!(Temperature::F, temp_b, f_boil, (a));
 /// assert_eq!(temp_b, Temperature::C(0));
 /// ```
 #[macro_export]
 macro_rules! and_then {
-    ($variant:path, $enum:expr, $and_then:tt) => {
+    ($variant:path, $enum:expr, $and_then:tt, ($($vars:tt),*)) => {
         match $enum {
-            $variant(value) => $variant($and_then(value)),
+            $variant($($vars),*) => {
+                let ($($vars),*) = $and_then(($($vars),*));
+                $variant($($vars),*)
+            },
             _ => $enum,
         }
     };
@@ -85,6 +112,7 @@ macro_rules! and_then {
 /// * `variant` - An enum variant
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `msg` - The message to include if panic!() is called due to an unexpected enum variant.
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -96,7 +124,7 @@ macro_rules! and_then {
 /// }
 ///
 /// let temp = Temperature::F(32);
-/// assert_eq!(32, variantly::expect!(Temperature::F, temp, "This should have been in fahrenheit"))
+/// assert_eq!(32, variantly::expect!(Temperature::F, temp, "This should have been in fahrenheit", (a)))
 /// ```
 /// ```should_panic
 /// #[derive(Debug, PartialEq, Copy, Clone)]
@@ -107,12 +135,12 @@ macro_rules! and_then {
 /// }
 ///
 /// let temp = Temperature::C(0);
-/// variantly::expect!(Temperature::F, temp, "This should have been in fahrenheit");
+/// variantly::expect!(Temperature::F, temp, "This should have been in fahrenheit", (a));
 /// ```
 #[macro_export]
 macro_rules! expect {
-    ($variant:path, $enum:expr, $msg:expr) => {
-        variantly::unwrap_or_else!($variant, $enum, (|| panic!("{}", $msg)))
+    ($variant:path, $enum:expr, $msg:expr, ($($vars:tt),*)) => {
+        variantly::unwrap_or_else!($variant, $enum, (|| panic!("{}", $msg)), ($($vars),*))
     };
 }
 
@@ -141,6 +169,7 @@ macro_rules! expect {
 /// ```
 #[macro_export]
 macro_rules! is {
+    // TODO, this can be simplified by using the tt pattern applied in other macros.
     ($variant_pattern:pat, $enum:expr) => {
         match $enum {
             $variant_pattern => true,
@@ -157,6 +186,7 @@ macro_rules! is {
 ///
 /// * `variant` - An enum variant
 /// * `enum` - An instance of an enum of the same base type as `variant`
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -168,14 +198,14 @@ macro_rules! is {
 /// }
 ///
 /// let temp = Temperature::F(32);
-/// assert_eq!(Some(32), variantly::ok!(Temperature::F, temp));
-/// assert_eq!(None, variantly::ok!(Temperature::C, temp));
+/// assert_eq!(Some(32), variantly::ok!(Temperature::F, temp, (a)));
+/// assert_eq!(None, variantly::ok!(Temperature::C, temp, (a)));
 /// ```
 #[macro_export]
 macro_rules! ok {
-    ($variant:path, $enum:expr) => {
+    ($variant:path, $enum:expr, ($($vars:tt),*)) => {
         match $enum {
-            $variant(value) => Some(value),
+            $variant($($vars),*) => Some(($($vars),*)),
             _ => None,
         }
     };
@@ -189,6 +219,7 @@ macro_rules! ok {
 /// * `variant` - An enum variant
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `err` - An instance of an Error to return if the passed in `enum` is not the expected `variant`
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -201,15 +232,15 @@ macro_rules! ok {
 ///
 /// let temp = Temperature::K(373);
 /// let err = "This isn't Kelvin!";
-/// assert_eq!(Ok(373), variantly::ok_or!(Temperature::K, temp, err));
+/// assert_eq!(Ok(373), variantly::ok_or!(Temperature::K, temp, err, (a)));
 ///
 /// let temp = Temperature::C(100);
-/// assert_eq!(Err(err), variantly::ok_or!(Temperature::K, temp, err));
+/// assert_eq!(Err(err), variantly::ok_or!(Temperature::K, temp, err, (a)));
 /// ```
 #[macro_export]
 macro_rules! ok_or {
-    ($variant:path, $enum:expr, $err:expr) => {
-        variantly::ok_or_else!($variant, $enum, (|| $err))
+    ($variant:path, $enum:expr, $err:expr, ($($vars:tt),*)) => {
+        variantly::ok_or_else!($variant, $enum, (|| $err), ($($vars),*))
     };
 }
 
@@ -222,6 +253,7 @@ macro_rules! ok_or {
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `else` - An expression that returns an instance of an Error to return if the passed in `enum` is not the expected `variant`.
 /// _`else` is lazily evaluated._
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -234,16 +266,16 @@ macro_rules! ok_or {
 ///
 /// let temp = Temperature::K(373);
 /// let or_else = || "This isn't Kelvin!";
-/// assert_eq!(Ok(373), variantly::ok_or_else!(Temperature::K, temp, or_else));
+/// assert_eq!(Ok(373), variantly::ok_or_else!(Temperature::K, temp, or_else, (a)));
 ///
 /// let temp = Temperature::C(100);
-/// assert_eq!(Err(or_else()), variantly::ok_or_else!(Temperature::K, temp, or_else));
+/// assert_eq!(Err(or_else()), variantly::ok_or_else!(Temperature::K, temp, or_else, (a)));
 /// ```
 #[macro_export]
 macro_rules! ok_or_else {
-    ($variant:path, $enum:expr, $else:tt) => {
+    ($variant:path, $enum:expr, $else:tt, ($($vars:tt),*)) => {
         match $enum {
-            $variant(value) => Ok(value),
+            $variant($($vars),*) => Ok(($($vars),*)),
             _ => Err($else()),
         }
     };
@@ -256,6 +288,7 @@ macro_rules! ok_or_else {
 /// * `variant` - An enum variant
 /// * `enum_a` - An instance of an enum of the same base type as `variant`
 /// * `enum_b` - An instance of an enum of the same base type as `variant`
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -269,21 +302,21 @@ macro_rules! ok_or_else {
 /// let temp_a = Temperature::F(32);
 /// let temp_b = Temperature::F(212);
 /// assert_eq!(
-///     variantly::or!(Temperature::F, temp_a, temp_b),
+///     variantly::or!(Temperature::F, temp_a, temp_b, (a)),
 ///     temp_a
 /// );
 ///
 /// let temp_c = Temperature::C(100);
 /// assert_eq!(
-///     variantly::or!(Temperature::C, temp_a, temp_c),
+///     variantly::or!(Temperature::C, temp_a, temp_c, (a)),
 ///     temp_c
 /// );
 /// ```
 #[macro_export]
 macro_rules! or {
-    ($variant:path, $enum_a:expr, $enum_b:expr) => {
+    ($variant:path, $enum_a:expr, $enum_b:expr, ($($vars:tt),*)) => {
         match $enum_a {
-            $variant(val) => $variant(val),
+            $variant($($vars),*) => $variant($($vars),*),
             _ => $enum_b,
         }
     };
@@ -297,6 +330,7 @@ macro_rules! or {
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `or_else` - A fn or closure that computes a default value.
 /// _`or_else` is lazily evaluated._
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -310,62 +344,27 @@ macro_rules! or {
 /// let temp = Temperature::F(32);
 /// let fallback = || 0;
 /// assert_eq!(
-///     variantly::or_else!(Temperature::F, temp, fallback),
+///     variantly::or_else!(Temperature::F, temp, fallback, (a)),
 ///     temp
 /// );
 ///
 /// let temp = Temperature::C(100);
 /// assert_eq!(
-///     variantly::or_else!(Temperature::F, temp, fallback),
+///     variantly::or_else!(Temperature::F, temp, fallback, (a)),
 ///     Temperature::F(0)
 /// );
 /// ```
 #[macro_export]
 macro_rules! or_else {
-    ($variant:path, $enum:expr, $or_else:tt) => {
+    ($variant:path, $enum:expr, $or_else:tt, ($($vars:tt),*)) => {
         match $enum {
-            $variant(val) => $variant(val),
-            _ => $variant($or_else()),
+            $variant($($vars),*) => $variant($($vars),*),
+            _ => {
+                let ($($vars),*) = $or_else();
+                $variant($($vars),*)
+            },
         }
     };
-}
-
-/// If the given enum is of the expected variant, replace it's inner value and return the previously contained value. Otherwise return `value`.
-///
-/// # Arguments
-///
-/// * `variant` - An enum variant
-/// * `enum` - An instance of an enum of the same base type as `variant`
-/// * `value` - The value to insert into the enum instance if it is of the expected variant.
-///
-/// # Examples
-/// ```
-/// #[derive(Debug, PartialEq, Clone)]
-/// enum Temperature {
-///     C(u32),
-///     F(u32),
-///     K(u32),
-/// }
-///
-/// let mut temp = Temperature::F(32);
-/// let original = variantly::replace!(Temperature::F, &mut temp, 100);
-/// assert_eq!(Temperature::F(100), temp);
-/// assert_eq!(Temperature::F(32), original);
-///
-/// let mut temp = Temperature::C(0);
-/// let new_value = variantly::replace!(Temperature::F, &mut temp, 100);
-/// assert_eq!(Temperature::C(0), temp);
-/// assert_eq!(Temperature::F(100), new_value);
-/// ```
-#[macro_export]
-macro_rules! replace {
-    ($variant:path, $enum:expr, $value:expr) => {{
-        let new_variant_value = $variant($value);
-        match $enum {
-            $variant(_) => std::mem::replace($enum, new_variant_value),
-            _ => new_variant_value,
-        }
-    }};
 }
 
 /// Return the value contained by the enum instance if it is of the expected variant, otherwise panics.
@@ -374,6 +373,7 @@ macro_rules! replace {
 ///
 /// * `variant` - An enum variant
 /// * `enum` - An instance of an enum of the same base type as `variant`
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -385,7 +385,7 @@ macro_rules! replace {
 /// }
 ///
 /// let temp = Temperature::F(32);
-/// assert_eq!(32, variantly::unwrap!(Temperature::F, temp))
+/// assert_eq!(32, variantly::unwrap!(Temperature::F, temp, (a)))
 ///
 /// ```
 /// ```should_panic
@@ -397,13 +397,13 @@ macro_rules! replace {
 /// }
 ///
 /// let temp = Temperature::F(32);
-/// variantly::unwrap!(Temperature::C, temp);
+/// variantly::unwrap!(Temperature::C, temp, (a));
 ///
 /// ```
 #[macro_export]
 macro_rules! unwrap {
-    ($variant:path, $enum:expr) => {
-        variantly::unwrap_or_else!($variant, $enum, (|| panic!()))
+    ($variant:path, $enum:expr, ($($vars:tt),*)) => {
+        variantly::unwrap_or_else!($variant, $enum, (|| panic!()), ($($vars),*))
     };
 }
 
@@ -414,6 +414,7 @@ macro_rules! unwrap {
 /// * `variant` - An enum variant
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `or` - The value to return if `enum` is not of the expected variant
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -425,14 +426,14 @@ macro_rules! unwrap {
 /// }
 ///
 /// let temp = Temperature::F(32);
-/// assert_eq!(32, variantly::unwrap_or!(Temperature::F, temp, 100));
-/// assert_eq!(100, variantly::unwrap_or!(Temperature::C, temp, 100));
+/// assert_eq!(32, variantly::unwrap_or!(Temperature::F, temp, 100, (a)));
+/// assert_eq!(100, variantly::unwrap_or!(Temperature::C, temp, 100, (a)));
 ///
 /// ```
 #[macro_export]
 macro_rules! unwrap_or {
-    ($variant:path, $enum:expr, $or:expr) => {
-        variantly::unwrap_or_else!($variant, $enum, (|| $or))
+    ($variant:path, $enum:expr, $or:expr, ($($vars:tt),*)) => {
+        variantly::unwrap_or_else!($variant, $enum, (|| $or), ($($vars),*))
     };
 }
 
@@ -444,6 +445,7 @@ macro_rules! unwrap_or {
 /// * `enum` - An instance of an enum of the same base type as `variant`
 /// * `or_else` - A fn or closure that computes a default value
 /// _`or_else` is lazily evaluated_
+/// * `vars` - Raw tokens to represent any contained variables in the enum variant.
 ///
 /// # Examples
 /// ```
@@ -458,15 +460,15 @@ macro_rules! unwrap_or {
 /// }
 ///
 /// let temp = Temperature::F(32);
-/// assert_eq!(32, variantly::unwrap_or_else!(Temperature::F, temp, expensive_calculation));
-/// assert_eq!(100, variantly::unwrap_or_else!(Temperature::C, temp, expensive_calculation));
+/// assert_eq!(32, variantly::unwrap_or_else!(Temperature::F, temp, expensive_calculation, (a)));
+/// assert_eq!(100, variantly::unwrap_or_else!(Temperature::C, temp, expensive_calculation, (a)));
 ///
 /// ```
 #[macro_export]
 macro_rules! unwrap_or_else {
-    ($variant:path, $enum:expr, $else:tt) => {
+    ($variant:path, $enum:expr, $else:tt, ($($vars:tt),*)) => {
         match $enum {
-            $variant(value) => value,
+            $variant($($vars),*) => ($($vars),*),
             _ => $else(),
         }
     };

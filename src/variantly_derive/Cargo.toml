@@ -5,10 +5,15 @@ name = "variantly_derive"
 version = "0.1.0"
 [dependencies]
 Inflector = "*"
+proc-macro2 = "*"
 quote = "*"
 
 [dependencies.syn]
 features = ["full"]
+version = "*"
+
+[dependencies.uuid]
+features = ["v4"]
 version = "*"
 
 [lib]

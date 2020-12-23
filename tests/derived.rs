@@ -12,9 +12,9 @@ enum TestEnum {
         value: u128,
     },
     #[allow(dead_code)]
-    // Included to validate that multi value tuple enum variants do not cause compilation issues.
     F(String, u128, String), // TODO, shouldn't this be more supported?
 }
+
 
 #[test]
 fn it_derives_working_and() {
@@ -179,19 +179,6 @@ fn it_derives_working_or_else() {
 
     let enum_ = TestEnum::C("Test".into()).or_else_d(or_else);
     assert_eq!(enum_.unwrap_d(), 456);
-}
-
-#[test]
-fn it_derives_working_or_replace() {
-    let mut enum_ = TestEnum::D(123);
-    let original = enum_.replace_d(456);
-    assert_eq!(enum_.unwrap_d(), 456);
-    assert_eq!(original.unwrap_d(), 123);
-
-    let mut enum_ = TestEnum::C("Test".into());
-    let failed_replace = enum_.replace_d(456);
-    assert_eq!(enum_.unwrap_c(), "Test");
-    assert_eq!(failed_replace.unwrap_d(), 456);
 }
 
 #[test]
