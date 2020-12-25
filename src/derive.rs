@@ -1,13 +1,12 @@
 use proc_macro::TokenStream;
 
-use crate::idents::generate_idents;
+use crate::idents::{generate_idents, unique_variant_ident};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, Fields, FieldsUnnamed, Ident, ItemEnum};
+use syn::{Fields, FieldsUnnamed, Ident, ItemEnum};
 
-pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
+pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream, syn::Error> {
     // parse necessary information from input
-    let item_enum = parse_macro_input!(input as ItemEnum);
     let enum_name = &item_enum.ident;
     let generics = &item_enum.generics;
     let where_clause = &generics.where_clause;
@@ -15,15 +14,20 @@ pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
     // For collecting impl functions
     let mut functions = vec![];
 
-    item_enum.variants.iter().for_each(|variant| {
+    let dupe_names = item_enum.variants.iter().find_map(|variant| {
         let ident = &variant.ident;
+        // Early return if this variant will derive conflicting fn names with another variant.
+        let unique_ident = match unique_variant_ident(&variant.ident, &item_enum.variants) {
+            Ok(name) => name,
+            Err(err) => return Some(err),
+        };
         // This will be initialized with a tokenstream representing how to match & ignore any variables held by a variant.
         let ignore;
 
         // variant-type specific logic
         match &variant.fields {
             Fields::Unnamed(fields) => {
-                handle_unnamed(fields, &ident, &mut functions, &enum_name);
+                handle_unnamed(fields, &ident, &unique_ident, &mut functions, &enum_name);
                 ignore = quote!((..));
             }
             Fields::Named(_) => ignore = quote!({ .. }),
@@ -31,7 +35,7 @@ pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
         }
 
         // include any impl functions that are common to all variant types.
-        identify!(ident, [is, is_not]);
+        identify!(unique_ident, [is, is_not]);
         functions.push(quote! {
             pub fn #is(&self) -> bool {
                 match self {
@@ -44,7 +48,12 @@ pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
                 !self.#is()
             }
         });
+        None
     });
+
+    if let Some(dupe_err) = dupe_names {
+        return Err(dupe_err);
+    }
 
     // Declare the actual impl block & iterate over all include fns.
     let output: TokenStream = quote! {
@@ -54,15 +63,14 @@ pub fn derive_variantly_fns(input: TokenStream) -> TokenStream {
     }
     .into();
 
-    println!("outputs:\n{}", output.to_string());
-
-    output
+    Ok(output)
 }
 
 /// Construct all impl functions related to variants with unnamed internal variables and add them to the functions vec.
 fn handle_unnamed(
     fields: &FieldsUnnamed,
     ident: &Ident,
+    unique_ident: &Ident,
     functions: &mut Vec<TokenStream2>,
     enum_name: &Ident,
 ) {
@@ -74,7 +82,7 @@ fn handle_unnamed(
 
     // declare ident variables with helper macro.
     identify!(
-        ident,
+        unique_ident,
         [
             and_then,
             and,

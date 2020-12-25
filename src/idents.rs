@@ -1,6 +1,7 @@
+use inflector::cases::snakecase::to_snake_case;
 ///! Parse or generate idents.
 use quote::format_ident;
-use syn::Ident;
+use syn::{punctuated::Punctuated, Error, Ident, Variant};
 use uuid::Uuid;
 
 /// Declare a series of vars named by `operation` that contain an ident created
@@ -18,7 +19,7 @@ use uuid::Uuid;
 /// ```
 macro_rules! identify {
     ($ident:expr, [$($operation:ident$(,)*)*]) => {
-        use inflector::cases::snakecase::to_snake_case;
+        use inflector::cases::snakecase::to_snake_case; // TODO delete maybe?
         $(
             let $operation = format_ident!(
                 "{}_{}",
@@ -41,4 +42,23 @@ pub fn generate_idents(count: usize) -> Vec<Ident> {
 /// Generate a valid, unique and random ident.
 pub fn unique_ident() -> Ident {
     format_ident!("ident_{}", Uuid::new_v4().to_simple().to_string())
+}
+
+pub fn unique_variant_ident<T>(
+    ident: &Ident,
+    variants: &Punctuated<Variant, T>,
+) -> Result<Ident, Error> {
+    let dupe = variants.iter().find(|variant| {
+        variant.ident.to_string() != ident.to_string()
+            && to_snake_case(&variant.ident.to_string()) == to_snake_case(&ident.to_string())
+    });
+
+    if let Some(dupe) = dupe {
+        let message = format!("`{}` cannot be coerced into a unique & idiomatic snake_case function name as it would collide with the `{}` variant of the same Enum. \
+            Variantly currently is incompatible with variant names of this type.",
+            &ident, &dupe.ident);
+        Err(Error::new(ident.span(), message))
+    } else {
+        Ok(format_ident! {"{}", to_snake_case(&ident.to_string())})
+    }
 }

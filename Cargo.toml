@@ -3,13 +3,18 @@ authors = ["Luke Roberts <lukeroberts.j@gmail.com>"]
 edition = "2018"
 name = "variantly"
 version = "0.1.0"
-
 [dependencies]
 Inflector = "*"
 proc-macro2 = "*"
 quote = "*"
-syn = {version = "*", features = ["full"]}
-uuid = {version = "*", features = ["v4"]}
+
+[dependencies.syn]
+features = ["full"]
+version = "*"
+
+[dependencies.uuid]
+features = ["v4"]
+version = "*"
 
 [lib]
 proc-macro = true
