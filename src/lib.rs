@@ -119,7 +119,7 @@
 //! ```ignore, no_run
 //! #[derive(Variantly)]
 //! enum SomeEnum {
-//!     #[variantly(rename = "capitol")]
+//!     #[variantly(rename = "capital")]
 //!     ABC,
 //!     #[variantly(rename = "lower")]
 //!     abc,
