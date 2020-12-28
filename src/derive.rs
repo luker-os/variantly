@@ -1,11 +1,15 @@
-use proc_macro::TokenStream;
+use crate::{
+    error::Result,
+    idents::generate_idents,
+    input::{compare_used_names, try_parse_variants, validate_compare, FieldParsed},
+};
 
-use crate::idents::{generate_idents, unique_variant_ident};
+use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{Fields, FieldsUnnamed, Ident, ItemEnum};
+use syn::{Ident, ItemEnum};
 
-pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream, syn::Error> {
+pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
     // parse necessary information from input
     let enum_name = &item_enum.ident;
     let generics = &item_enum.generics;
@@ -14,28 +18,31 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream, syn::Err
     // For collecting impl functions
     let mut functions = vec![];
 
-    let dupe_names = item_enum.variants.iter().find_map(|variant| {
-        let ident = &variant.ident;
-        // Early return if this variant will derive conflicting fn names with another variant.
-        let unique_ident = match unique_variant_ident(&variant.ident, &item_enum.variants) {
-            Ok(name) => name,
-            Err(err) => return Some(err),
-        };
+    let variants = try_parse_variants(&item_enum)?;
+
+    validate_compare(&variants, vec![compare_used_names])?;
+
+    variants.iter().for_each(|variant| {
         // This will be initialized with a tokenstream representing how to match & ignore any variables held by a variant.
         let ignore;
-
-        // variant-type specific logic
-        match &variant.fields {
-            Fields::Unnamed(fields) => {
-                handle_unnamed(fields, &ident, &unique_ident, &mut functions, &enum_name);
+        let ident = &variant.ident;
+        match &variant.fields.style {
+            darling::ast::Style::Tuple => {
+                handle_unnamed(
+                    &variant.fields,
+                    &variant.ident,
+                    &variant.used_name,
+                    &mut functions,
+                    &enum_name,
+                );
                 ignore = quote!((..));
             }
-            Fields::Named(_) => ignore = quote!({ .. }),
-            Fields::Unit => ignore = quote!(),
+            darling::ast::Style::Struct => ignore = quote!({ .. }),
+            darling::ast::Style::Unit => ignore = quote!(),
         }
 
         // include any impl functions that are common to all variant types.
-        identify!(unique_ident, [is, is_not]);
+        identify!(variant.used_name, [is, is_not]);
         functions.push(quote! {
             pub fn #is(&self) -> bool {
                 match self {
@@ -48,12 +55,7 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream, syn::Err
                 !self.#is()
             }
         });
-        None
     });
-
-    if let Some(dupe_err) = dupe_names {
-        return Err(dupe_err);
-    }
 
     // Declare the actual impl block & iterate over all include fns.
     let output: TokenStream = quote! {
@@ -68,17 +70,17 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream, syn::Err
 
 /// Construct all impl functions related to variants with unnamed internal variables and add them to the functions vec.
 fn handle_unnamed(
-    fields: &FieldsUnnamed,
+    fields: &darling::ast::Fields<FieldParsed>,
     ident: &Ident,
     unique_ident: &Ident,
     functions: &mut Vec<TokenStream2>,
     enum_name: &Ident,
 ) {
     // parse necessary information from fields.
-    let types = &fields.unnamed;
+    let types: Vec<&syn::Type> = fields.fields.iter().map(|field| &field.ty).collect();
     let vars = generate_idents(types.len());
     let vars = quote! { (#( #vars ),*)};
-    let types = quote! { #types };
+    let types = quote! { (#( #types ),*)};
 
     // declare ident variables with helper macro.
     identify!(
@@ -127,7 +129,7 @@ fn handle_unnamed(
             self.#unwrap_or_else(|| panic!("{}", msg))
         }
 
-        pub fn #ok(self) -> Option<(#types)> { // TODO: Verify this is ok for single var enums
+        pub fn #ok(self) -> Option<(#types)> {
             match self {
                 #var_pattern => Some((#vars)),
                 _ => None,

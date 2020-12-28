@@ -5,6 +5,7 @@ name = "variantly"
 version = "0.1.0"
 [dependencies]
 Inflector = "*"
+darling = "*"
 proc-macro2 = "*"
 quote = "*"
 

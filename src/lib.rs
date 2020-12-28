@@ -94,23 +94,27 @@
 //! }
 //! ```
 //!
+#[macro_use]
+extern crate darling;
 extern crate proc_macro;
 
 #[macro_use]
 mod idents;
 
 mod derive;
+mod error;
+mod input;
 
 use derive::derive_variantly_fns;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemEnum};
 
 /// The `Variantly` derive macro. See [the module level documentation](self) for more.
-#[proc_macro_derive(Variantly)]
+#[proc_macro_derive(Variantly, attributes(variantly))]
 pub fn variantly(input: TokenStream) -> TokenStream {
     let item_enum = parse_macro_input!(input as ItemEnum);
     match derive_variantly_fns(item_enum) {
         Ok(ok) => ok,
-        Err(err) => err.to_compile_error().into(),
+        Err(err) => err.to_compile_error(),
     }
 }
