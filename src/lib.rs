@@ -7,6 +7,8 @@
 //!     HSV(u8, u8, u8),
 //!     Grey(u8),
 //!     FromOutOfSpace,
+//!     #[variantly(rename = "darkness")]
+//!     Black,
 //! }
 //!
 //! fn example() {
@@ -55,6 +57,10 @@
 //!     let color = Color::FromOutOfSpace;
 //!     let result_rgb = color.ok_or_else_rgb(|| Some("This is a computationally expensive error!"));
 //!     assert!(result_rgb.is_err());
+//!
+//!     // The `#[variantly(rename = "darkness")]` attribute renames associated functions:
+//!     let color = Color::Black;
+//!     assert!(color.is_darkness())
 //! }
 //! ```
 //! # Derived functions
@@ -94,6 +100,35 @@
 //! }
 //! ```
 //!
+//! # Renaming associated functions
+//! The `varianty` attribute may be placed on a variant in order to customize the resulting associated function names.
+//! ```ignore, no_run
+//! #[derive(Variantly)]
+//! enum SomeEnum {
+//!     #[variantly(rename = "variant_a")]
+//!     SomeVariantWithALongName(String),
+//!     VariantB,
+//! }
+//! ```
+//! Functions associated with `SomeVariantWithALongName` will now be accessible only with the `variant_a`
+//! suffix, such as `.unwrap_or_else_variant_a()`. This can help control overly verbose fn names.
+//! Note that the input to `rename` is used as is and is not coerced into snake_case.
+//!
+//!
+//! The above is also relevant when two variant names would expand to create conflicting function names:
+//! ```ignore, no_run
+//! #[derive(Variantly)]
+//! enum SomeEnum {
+//!     #[variantly(rename = "capitol")]
+//!     ABC,
+//!     #[variantly(rename = "lower")]
+//!     abc,
+//! }
+//! ```
+//! Without the `rename` attribute in the above, both variants would create conflicting functions such as `.is_abc()` due to the coercion to snake_case.
+//! This is avoided by using the rename input to create meaningful and unique fn names.
+//!
+
 #[macro_use]
 extern crate darling;
 extern crate proc_macro;
