@@ -4,6 +4,7 @@ use syn::Error as SynError;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Custom error type for wrapping syn & darling errors as well as any other custom errors that may become necessary.
 pub enum Error {
     Syn(SynError),
     Darling(DarlingError),

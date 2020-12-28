@@ -68,7 +68,7 @@
 //! 1. `is`
 //! 1. `is_not`
 //!
-//! The following are supported function types that are derived for tuple-like structs. This includes structs that hold one or many unnamed values.
+//! The following are supported function types that are derived for tuple-like structs. This includes structs that hold one or many tuple style values.
 //! 1. `and`
 //! 1. `and_then`
 //! 1. `expect`

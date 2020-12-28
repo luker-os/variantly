@@ -4,10 +4,14 @@ use crate::{
     input::{compare_used_names, try_parse_variants, validate_compare, FieldParsed},
 };
 
+use darling::ast::{
+    Fields,
+    Style::{Struct, Tuple, Unit},
+};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{Ident, ItemEnum};
+use syn::{Ident, ItemEnum, Type};
 
 pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
     // parse necessary information from input
@@ -27,8 +31,8 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
         let ignore;
         let ident = &variant.ident;
         match &variant.fields.style {
-            darling::ast::Style::Tuple => {
-                handle_unnamed(
+            Tuple => {
+                handle_tuple(
                     &variant.fields,
                     &variant.ident,
                     &variant.used_name,
@@ -37,8 +41,8 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
                 );
                 ignore = quote!((..));
             }
-            darling::ast::Style::Struct => ignore = quote!({ .. }),
-            darling::ast::Style::Unit => ignore = quote!(),
+            Struct => ignore = quote!({ .. }),
+            Unit => ignore = quote!(),
         }
 
         // include any impl functions that are common to all variant types.
@@ -57,7 +61,7 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
         });
     });
 
-    // Declare the actual impl block & iterate over all include fns.
+    // Declare the actual impl block & iterate over all fns.
     let output: TokenStream = quote! {
         impl#generics #enum_name#generics #where_clause {
             #(#functions)*
@@ -68,16 +72,16 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
     Ok(output)
 }
 
-/// Construct all impl functions related to variants with unnamed internal variables and add them to the functions vec.
-fn handle_unnamed(
-    fields: &darling::ast::Fields<FieldParsed>,
+/// Construct all impl functions related to variants with tuple style internal variables and add them to the functions vec.
+fn handle_tuple(
+    fields: &Fields<FieldParsed>,
     ident: &Ident,
     unique_ident: &Ident,
     functions: &mut Vec<TokenStream2>,
     enum_name: &Ident,
 ) {
     // parse necessary information from fields.
-    let types: Vec<&syn::Type> = fields.fields.iter().map(|field| &field.ty).collect();
+    let types: Vec<&Type> = fields.fields.iter().map(|field| &field.ty).collect();
     let vars = generate_idents(types.len());
     let vars = quote! { (#( #vars ),*)};
     let types = quote! { (#( #types ),*)};
