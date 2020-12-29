@@ -7,6 +7,7 @@ edition = "2018"
 license = "MIT"
 name = "variantly"
 version = "0.1.0"
+repository = "https://github.com/luker-os/variantly"
 
 [dependencies]
 Inflector = "^0.11.4"
