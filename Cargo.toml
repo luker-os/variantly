@@ -1,21 +1,20 @@
 [package]
 authors = ["Luke Roberts <lukeroberts.j@gmail.com>"]
+description = """
+Derive associated functions for enums that are familiar from `std::option::Option` & `std::result::Result`.
+"""
 edition = "2018"
+license = "MIT"
 name = "variantly"
 version = "0.1.0"
+
 [dependencies]
-Inflector = "*"
-darling = "*"
-proc-macro2 = "*"
-quote = "*"
-
-[dependencies.syn]
-features = ["full"]
-version = "*"
-
-[dependencies.uuid]
-features = ["v4"]
-version = "*"
+Inflector = "^0.11.4"
+darling = "^0.11.0"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = {features = ["full"], version = "1.0"}
+uuid = {features = ["v4"], version = "^0.8.0"}
 
 [lib]
 proc-macro = true
