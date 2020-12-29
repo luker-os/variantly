@@ -1,5 +1,5 @@
 # Variantly
-Derive associated functions for enums that are familiar from `std::option::Option` & `std::result::Result`.
+Derive associated functions for enum variants that are familiar from `std::option::Option` & `std::result::Result` such as `unwrap_or` or `and_then`.
 # Example
 ```rust
 #[derive(Variantly)]
