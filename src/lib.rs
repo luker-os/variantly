@@ -148,8 +148,5 @@ use syn::{parse_macro_input, ItemEnum};
 #[proc_macro_derive(Variantly, attributes(variantly))]
 pub fn variantly(input: TokenStream) -> TokenStream {
     let item_enum = parse_macro_input!(input as ItemEnum);
-    match derive_variantly_fns(item_enum) {
-        Ok(ok) => ok,
-        Err(err) => err.to_compile_error(),
-    }
+    derive_variantly_fns(item_enum).unwrap_or_else(|err| err.to_compile_error())
 }

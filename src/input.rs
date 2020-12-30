@@ -54,23 +54,26 @@ pub fn try_parse_variants(item_enum: &ItemEnum) -> Result<Vec<VariantParsed>> {
         .collect()
 }
 
-
-/// Helper function for validation that requires comparing each variant with each other variant. Visits each pair only once.
+/// Helper function for validation that requires comparing each variant with each other variant.
+/// Visits each pair only once and early returns on the first failure.
 pub fn validate_compare<F: Fn(&VariantParsed, &VariantParsed) -> Result<()>>(
     variants: &Vec<VariantParsed>,
     validations: Vec<F>,
 ) -> Result<()> {
+    // Enumerate over the entire set.
     variants
         .as_slice()
         .iter()
         .enumerate()
-        .try_for_each(|(index, variant)| -> Result<()> {
+        .try_for_each(|(index, variant_a)| -> Result<()> {
+            // Iterate over variants not visited already by the primary iterator.
             variants[(index + 1)..variants.len()]
                 .iter()
-                .try_for_each(|other_variant| {
+                .try_for_each(|variant_b| {
+                    // Run the current pair against all validation fns
                     validations
                         .iter()
-                        .try_for_each(|validation| validation(variant, other_variant))
+                        .try_for_each(|validation| validation(variant_a, variant_b))
                 })
         })
 }
@@ -79,7 +82,7 @@ pub fn validate_compare<F: Fn(&VariantParsed, &VariantParsed) -> Result<()>>(
 pub fn compare_used_names(a: &VariantParsed, b: &VariantParsed) -> Result<()> {
     if a.used_name == b.used_name {
         let message = format!("`{}` cannot be coerced into a unique & idiomatic snake_case function name as it would collide with the `{}` variant of the same Enum. \
-            Variantly currently is incompatible with variant names of this type.",
+            use the following attribute on this or the conflicting variant to resolve: `#[variantly(rename = \"some_other_name\")]`",
             &a.ident, &b.ident);
         Err(syn::Error::new(a.ident.span(), message).into())
     } else {

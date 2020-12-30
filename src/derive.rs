@@ -1,23 +1,17 @@
 use crate::{
     error::Result,
     idents::generate_idents,
-    input::{compare_used_names, try_parse_variants, validate_compare, FieldParsed},
+    input::{compare_used_names, try_parse_variants, validate_compare, VariantParsed},
 };
 
-use darling::ast::{
-    Fields,
-    Style::{Struct, Tuple, Unit},
-};
+use darling::ast::Style::{Struct, Tuple, Unit};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{Ident, ItemEnum, Type};
 
 pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
-    // parse necessary information from input
     let enum_name = &item_enum.ident;
-    let generics = &item_enum.generics;
-    let where_clause = &generics.where_clause;
 
     // For collecting impl functions
     let mut functions = vec![];
@@ -32,13 +26,7 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
         let ident = &variant.ident;
         match &variant.fields.style {
             Tuple => {
-                handle_tuple(
-                    &variant.fields,
-                    &variant.ident,
-                    &variant.used_name,
-                    &mut functions,
-                    &enum_name,
-                );
+                handle_tuple(&variant, &mut functions, &enum_name);
                 ignore = quote!((..));
             }
             Struct => ignore = quote!({ .. }),
@@ -61,6 +49,9 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
         });
     });
 
+    let generics = &item_enum.generics;
+    let where_clause = &generics.where_clause;
+
     // Declare the actual impl block & iterate over all fns.
     let output: TokenStream = quote! {
         impl#generics #enum_name#generics #where_clause {
@@ -73,22 +64,24 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
 }
 
 /// Construct all impl functions related to variants with tuple style internal variables and add them to the functions vec.
-fn handle_tuple(
-    fields: &Fields<FieldParsed>,
-    ident: &Ident,
-    unique_ident: &Ident,
-    functions: &mut Vec<TokenStream2>,
-    enum_name: &Ident,
-) {
-    // parse necessary information from fields.
-    let types: Vec<&Type> = fields.fields.iter().map(|field| &field.ty).collect();
+fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum_name: &Ident) {
+    // parse necessary information from variant & fields.
+    let ident = &variant.ident;
+    let types: Vec<&Type> = variant
+        .fields
+        .fields
+        .iter()
+        .map(|field| &field.ty)
+        .collect();
+
+    // Generate a unique ident per type used in the variant
     let vars = generate_idents(types.len());
     let vars = quote! { (#( #vars ),*)};
     let types = quote! { (#( #types ),*)};
 
     // declare ident variables with helper macro.
     identify!(
-        unique_ident,
+        variant.used_name,
         [
             and_then,
             and,
