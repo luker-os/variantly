@@ -12,7 +12,7 @@
 //! }
 //!
 //! fn example() {
-//!     let color = Color::HSV(255, 255, 0);
+//!     let color = Color::HSV(123, 45, 67);
 //!
 //!     // boolean helper function for determining variant:
 //!     assert!(color.is_hsv());
@@ -20,7 +20,7 @@
 //!
 //!     // Get inner values:
 //!     let (h, s, v) = color.unwrap_hsv();
-//!     assert_eq!((h, s, v), (255, 255, 000));
+//!     assert_eq!((h, s, v), (123, 45, 67));
 //!
 //!     // Single values don't require tuple destructuring:
 //!     let color = Color::Grey(128);
@@ -28,9 +28,9 @@
 //!     assert_eq!(value, 128);
 //!
 //!     // Alter inner value, only if hsv:
-//!     let color = Color::HSV(255, 255, 0);
-//!     let color = color.and_then_hsv(|(h, s, _)| (h, s, 255));
-//!     assert_eq!(color.unwrap_hsv(), (255, 255, 255));
+//!     let color = Color::HSV(111, 22, 33);
+//!     let color = color.and_then_hsv(|(h, s, _)| (h, s, 100));
+//!     assert_eq!(color.unwrap_hsv(), (111, 22, 100));
 //!
 //!     // Safely unwrap with a fallback:
 //!     let color = Color::RGB(255, 255, 0);
