@@ -1,4 +1,4 @@
-//! Derive associated functions for enum variants that are familiar from `std::option::Option` & `std::result::Result` such as `unwrap_or` or `and_then`.
+//! Derive helper methods for enum variants that are familiar from `std::option::Option` & `std::result::Result` such as `unwrap_or` or `and_then`.
 //! # Example
 //! ```ignore, no_run
 //! #[derive(Variantly)]
@@ -58,7 +58,7 @@
 //!     let result_rgb = color.ok_or_else_rgb(|| Some("This is a computationally expensive error!"));
 //!     assert!(result_rgb.is_err());
 //!
-//!     // The `#[variantly(rename = "darkness")]` attribute renames associated functions:
+//!     // The `#[variantly(rename = "darkness")]` attribute renames methods.
 //!     let color = Color::Black;
 //!     assert!(color.is_darkness())
 //! }
@@ -100,8 +100,8 @@
 //! }
 //! ```
 //!
-//! # Renaming associated functions
-//! The `varianty` attribute may be placed on a variant in order to customize the resulting associated function names.
+//! # Renaming Methods
+//! The `varianty` attribute may be placed on a variant in order to customize the resulting method names.
 //! ```ignore, no_run
 //! #[derive(Variantly)]
 //! enum SomeEnum {
