@@ -87,18 +87,15 @@ Simplified, this looks like:
 ```rust
 use inflector::cases::snakecase::to_snake_case;
 
-fn name_fn(operation: String, variant_name: String) -> String {
+fn name_fn(operation: &str, variant_name: &str) -> String {
     let snake_case_variant = to_snake_case(&variant_name);
-    format!("{}_{}", snake_case_variant, operation)
+    format!("{}_{}", operation, snake_case_variant)
 }
 
-#[test]
-fn it_makes_a_name() {
-    assert_eq!(
-        name_fn("unwrap","VariantA"),
-        "unwrap_variant_a".into()
-    )
-}
+assert_eq!(
+    name_fn("unwrap","VariantA"),
+    String::from("unwrap_variant_a")
+)
 ```
 
 # Renaming Methods
