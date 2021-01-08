@@ -1,4 +1,4 @@
-//! Derive associated functions for enum variants that are familiar from `std::option::Option` & `std::result::Result` such as `unwrap_or` or `and_then`.
+//! Derive helper methods for enum variants that are familiar from `std::option::Option` & `std::result::Result` such as `unwrap_or` or `and_then`.
 //! # Example
 //! ```ignore, no_run
 //! #[derive(Variantly)]
@@ -58,7 +58,7 @@
 //!     let result_rgb = color.ok_or_else_rgb(|| Some("This is a computationally expensive error!"));
 //!     assert!(result_rgb.is_err());
 //!
-//!     // The `#[variantly(rename = "darkness")]` attribute renames associated functions:
+//!     // The `#[variantly(rename = "darkness")]` attribute renames methods.
 //!     let color = Color::Black;
 //!     assert!(color.is_darkness())
 //! }
@@ -86,22 +86,19 @@
 //! ```
 //! use inflector::cases::snakecase::to_snake_case;
 //!
-//! fn name_fn(operation: String, variant_name: String) -> String {
+//! fn name_fn(operation: &str, variant_name: &str) -> String {
 //!     let snake_case_variant = to_snake_case(&variant_name);
-//!     format!("{}_{}", snake_case_variant, operation)
+//!     format!("{}_{}", operation, snake_case_variant)
 //! }
 //!
-//! #[test]
-//!fn it_makes_a_name() {
-//!     assert_eq!(
-//!         name_fn("unwrap","VariantA"),
-//!         "unwrap_variant_a".into()
-//!     )
-//! }
+//! assert_eq!(
+//!     name_fn("unwrap","VariantA"),
+//!     String::from("unwrap_variant_a")
+//! )
 //! ```
 //!
-//! # Renaming associated functions
-//! The `varianty` attribute may be placed on a variant in order to customize the resulting associated function names.
+//! # Renaming Methods
+//! The `varianty` attribute may be placed on a variant in order to customize the resulting method names.
 //! ```ignore, no_run
 //! #[derive(Variantly)]
 //! enum SomeEnum {

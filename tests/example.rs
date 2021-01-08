@@ -59,7 +59,7 @@ fn example() {
     let result_rgb = color.ok_or_else_rgb(|| Some("This is a computationally expensive error!"));
     assert!(result_rgb.is_err());
 
-    // The `#[variantly(rename = "darkness")]` attribute renames associated functions:
+    // The `#[variantly(rename = "darkness")]` attribute renames methods.
     let color = Color::Black;
     assert!(color.is_darkness())
 }
