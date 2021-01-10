@@ -16,7 +16,10 @@ fn single_value_tuple() {
 #[test]
 fn multi_value_tuple() {
     // Match
-    assert_eq!(TestEnum::tuple(123).ok_tuple(), Some(("123".into(), 123)));
+    assert_eq!(
+        TestEnum::new_tuple(123).ok_tuple(),
+        Some(("123".into(), 123))
+    );
 
     // Non-Match
     assert_eq!(Unit.ok_tuple(), None);

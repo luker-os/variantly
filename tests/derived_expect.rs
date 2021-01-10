@@ -18,7 +18,7 @@ fn single_value_tuple_panic() {
 #[test]
 fn multi_value_tuple() {
     assert_eq!(
-        TestEnum::tuple(123).expect_tuple("This should have been a tuple"),
+        TestEnum::new_tuple(123).expect_tuple("This should have been a tuple"),
         ("123".into(), 123)
     );
 }

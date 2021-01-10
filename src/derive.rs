@@ -67,6 +67,7 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
 fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum_name: &Ident) {
     // parse necessary information from variant & fields.
     let ident = &variant.ident;
+    let formatted_variant = &variant.used_name;
     let types: Vec<&Type> = variant
         .fields
         .fields
@@ -105,6 +106,10 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
 
     // Create and push actual impl functions
     functions.push(quote! {
+        pub fn #formatted_variant(self) -> Option<(#types)> {
+            self.#ok()
+        }
+
         pub fn #and(self, and: Self) -> Self {
             match (&self, and) {
                 (&#variant(..), #var_pattern) => #var_pattern,

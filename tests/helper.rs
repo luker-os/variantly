@@ -28,7 +28,7 @@ pub enum TestEnum {
 }
 
 impl TestEnum {
-    pub fn tuple(num: u128) -> Self {
+    pub fn new_tuple(num: u128) -> Self {
         Self::Tuple(num.to_string(), num)
     }
 }

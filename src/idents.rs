@@ -18,12 +18,11 @@ use uuid::Uuid;
 /// ```
 macro_rules! identify {
     ($ident:expr, [$($operation:ident$(,)*)*]) => {
-        use inflector::cases::snakecase::to_snake_case; // TODO delete maybe?
         $(
             let $operation = format_ident!(
                 "{}_{}",
                 stringify!($operation),
-                to_snake_case(&$ident.to_string())
+                $ident
             );
         )*
     };
