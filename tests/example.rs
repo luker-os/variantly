@@ -46,17 +46,17 @@ fn example() {
 
     // Convert into an Option
     let color = Color::RGB(0, 255, 255);
-    let optional_rgb = color.ok_rgb();
+    let optional_rgb = color.rgb();
     assert_eq!(Some((0, 255, 255)), optional_rgb);
 
     // Convert into a Result
     let color = Color::RGB(255, 0, 255);
-    let result_rgb = color.ok_or_rgb("Error: This is not an RGB variant!");
+    let result_rgb = color.rgb_or("Error: This is not an RGB variant!");
     assert_eq!(Ok((255, 0, 255)), result_rgb);
 
     // Operations like this can also use their familiar `_else` versions:
     let color = Color::FromOutOfSpace;
-    let result_rgb = color.ok_or_else_rgb(|| Some("This is a computationally expensive error!"));
+    let result_rgb = color.rgb_or_else(|| Some("This is a computationally expensive error!"));
     assert!(result_rgb.is_err());
 
     // The `#[variantly(rename = "darkness")]` attribute renames methods.

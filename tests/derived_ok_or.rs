@@ -5,7 +5,8 @@ use helper::{
 };
 
 #[test]
-fn single_value_tuple() {
+#[allow(deprecated)] // Test deprecated for back-compat. Remove in 1.0.0 or next pre-stable minor bump.
+fn single_value_tuple_deprecated() {
     // Match
     assert_eq!(Int(123).ok_or_int("ERR").unwrap(), 123);
 
@@ -14,7 +15,8 @@ fn single_value_tuple() {
 }
 
 #[test]
-fn multi_value_tuple() {
+#[allow(deprecated)] // Test deprecated for back-compat. Remove in 1.0.0 or next pre-stable minor bump.
+fn multi_value_tuple_deprecated() {
     // Match
     assert_eq!(
         TestEnum::new_tuple(123).ok_or_tuple("ERR").unwrap(),
@@ -23,4 +25,25 @@ fn multi_value_tuple() {
 
     // Non-Match
     assert_eq!(Unit.ok_or_tuple("ERR").unwrap_err(), "ERR");
+}
+
+#[test]
+fn single_value_tuple() {
+    // Match
+    assert_eq!(Int(123).int_or("ERR").unwrap(), 123);
+
+    // Non-Match
+    assert_eq!(Unit.int_or("ERR").unwrap_err(), "ERR");
+}
+
+#[test]
+fn multi_value_tuple() {
+    // Match
+    assert_eq!(
+        TestEnum::new_tuple(123).tuple_or("ERR").unwrap(),
+        ("123".into(), 123)
+    );
+
+    // Non-Match
+    assert_eq!(Unit.tuple_or("ERR").unwrap_err(), "ERR");
 }
