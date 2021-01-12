@@ -34,7 +34,7 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
         }
 
         // include any impl functions that are common to all variant types.
-        identify!(variant.used_name, [is, is_not]);
+        identify!(variant.used_name, [is, is_not, and, or]);
         functions.push(quote! {
             pub fn #is(&self) -> bool {
                 match self {
@@ -46,6 +46,21 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
             pub fn #is_not(&self) -> bool {
                 !self.#is()
             }
+
+            pub fn #and(self, and: Self) -> Self {
+                match (&self, &and) {
+                    (#enum_name::#ident#ignore, #enum_name::#ident#ignore) => and,
+                    _ => self
+                }
+            }
+
+            pub fn #or(self, or: Self) -> Self {
+                match &self {
+                    #enum_name::#ident#ignore => self,
+                    _ => or
+                }
+            }
+
         });
     });
 
@@ -85,20 +100,16 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
         variant.used_name,
         [
             and_then,
-            and,
             expect,
             ok_or_else,
             ok_or,
             ok,
             or_else,
-            or,
             unwrap_or_else,
             unwrap_or,
             unwrap
         ]
     );
-
-    let variant = quote! { #enum_name::#ident };
 
     // used for both pattern matching and constructing variants:
     // var_pattern = SomeEnum::SomeVariant(some_variable_1, some_variable_2)
@@ -108,13 +119,6 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
     functions.push(quote! {
         pub fn #formatted_variant(self) -> Option<(#types)> {
             self.#ok()
-        }
-
-        pub fn #and(self, and: Self) -> Self {
-            match (&self, and) {
-                (&#variant(..), #var_pattern) => #var_pattern,
-                _ => self
-            }
         }
 
         pub fn #and_then<F: FnOnce((#types)) -> (#types)>(self, and_then: F) -> Self {
@@ -146,13 +150,6 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
             match self {
                 #var_pattern => Ok((#vars)),
                 _ => Err(or_else())
-            }
-        }
-
-        pub fn #or(self, or: Self) -> Self {
-            match self {
-                #var_pattern => #var_pattern,
-                _ => or,
             }
         }
 
