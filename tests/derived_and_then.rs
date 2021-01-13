@@ -21,7 +21,9 @@ fn multi_value_tuple() {
 
     // Match
     assert_eq!(
-        TestEnum::tuple(123).and_then_tuple(and_then).unwrap_tuple(),
+        TestEnum::new_tuple(123)
+            .and_then_tuple(and_then)
+            .unwrap_tuple(),
         ("123123".into(), 246)
     );
 

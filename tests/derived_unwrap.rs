@@ -17,7 +17,7 @@ fn single_value_tuple_panic() {
 
 #[test]
 fn multi_value_tuple() {
-    assert_eq!(TestEnum::tuple(123).unwrap_tuple(), ("123".into(), 123));
+    assert_eq!(TestEnum::new_tuple(123).unwrap_tuple(), ("123".into(), 123));
 }
 
 #[test]

@@ -1,5 +1,7 @@
 use crate::error::Result;
 use darling::{ast::Fields, FromVariant};
+use inflector::cases::snakecase::to_snake_case;
+use quote::format_ident;
 use syn::{Attribute, Ident, ItemEnum, Type, Visibility};
 
 /// Struct for parsing relevant input to each variant of a variantly derived enum.
@@ -34,7 +36,10 @@ impl From<VariantInput> for VariantParsed {
     fn from(variant: VariantInput) -> Self {
         let ident = &variant.ident;
         VariantParsed {
-            used_name: variant.rename.unwrap_or_else(|| ident.clone()),
+            used_name: format_ident!(
+                "{}",
+                to_snake_case(&variant.rename.unwrap_or_else(|| ident.clone()).to_string())
+            ),
             ident: variant.ident,
             fields: variant.fields,
         }

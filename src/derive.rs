@@ -34,7 +34,7 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
         }
 
         // include any impl functions that are common to all variant types.
-        identify!(variant.used_name, [is, is_not]);
+        identify!(variant.used_name, [is, is_not, and, or]);
         functions.push(quote! {
             pub fn #is(&self) -> bool {
                 match self {
@@ -46,6 +46,21 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
             pub fn #is_not(&self) -> bool {
                 !self.#is()
             }
+
+            pub fn #and(self, and: Self) -> Self {
+                match (&self, &and) {
+                    (#enum_name::#ident#ignore, #enum_name::#ident#ignore) => and,
+                    _ => self
+                }
+            }
+
+            pub fn #or(self, or: Self) -> Self {
+                match &self {
+                    #enum_name::#ident#ignore => self,
+                    _ => or
+                }
+            }
+
         });
     });
 
@@ -84,31 +99,60 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
         variant.used_name,
         [
             and_then,
-            and,
             expect,
             ok_or_else,
             ok_or,
             ok,
             or_else,
-            or,
             unwrap_or_else,
             unwrap_or,
             unwrap
         ]
     );
 
-    let variant = quote! { #enum_name::#ident };
-
     // used for both pattern matching and constructing variants:
     // var_pattern = SomeEnum::SomeVariant(some_variable_1, some_variable_2)
     let var_pattern = quote! { #enum_name::#ident#vars };
 
+    // Helper for deprecating methods
+    let deprecate = |alternate| {
+        let note = format!(
+            "Please use the derived `{}::{}` method instead. This method will be removed in 1.0.0 or next pre-stable minor bump.",
+            &enum_name, alternate
+        );
+        quote! {
+            #[deprecated(
+                since = "0.2.0",
+                note = #note
+            )]
+        }
+    };
+
+    let var_fn = &variant.used_name;
+    let var_or_fn = format_ident!("{}_or", var_fn);
+    let var_or_else_fn = format_ident!("{}_or_else", var_fn);
+
+    let ok_deprecation = deprecate(var_fn);
+    let ok_or_deprecation = deprecate(&var_or_fn);
+    let ok_or_else_deprecation = deprecate(&var_or_else_fn);
+
     // Create and push actual impl functions
     functions.push(quote! {
-        pub fn #and(self, and: Self) -> Self {
-            match (&self, and) {
-                (&#variant(..), #var_pattern) => #var_pattern,
-                _ => self
+        pub fn #var_fn(self) -> Option<(#types)> {
+            match self {
+                #var_pattern => Some((#vars)),
+                _ => None,
+            }
+        }
+
+        pub fn #var_or_fn<E>(self, or: E) -> Result<(#types), E> {
+            self.#var_or_else_fn(|| or)
+        }
+
+        pub fn #var_or_else_fn<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
+            match self {
+                #var_pattern => Ok((#vars)),
+                _ => Err(or_else())
             }
         }
 
@@ -126,29 +170,19 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
             self.#unwrap_or_else(|| panic!("{}", msg))
         }
 
+        #ok_deprecation
         pub fn #ok(self) -> Option<(#types)> {
-            match self {
-                #var_pattern => Some((#vars)),
-                _ => None,
-            }
+            self.#var_fn()
         }
 
+        #ok_or_deprecation
         pub fn #ok_or<E>(self, or: E) -> Result<(#types), E> {
-            self.#ok_or_else(|| or)
+            self.#var_or_fn(or)
         }
 
+        #ok_or_else_deprecation
         pub fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
-            match self {
-                #var_pattern => Ok((#vars)),
-                _ => Err(or_else())
-            }
-        }
-
-        pub fn #or(self, or: Self) -> Self {
-            match self {
-                #var_pattern => #var_pattern,
-                _ => or,
-            }
+            self.#var_or_else_fn(or_else)
         }
 
         pub fn #or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> Self {

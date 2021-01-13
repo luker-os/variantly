@@ -17,7 +17,7 @@ fn single_value_tuple() {
 fn multi_value_tuple() {
     // Match
     assert_eq!(
-        TestEnum::tuple(123).unwrap_or_tuple(("456".into(), 456)),
+        TestEnum::new_tuple(123).unwrap_or_tuple(("456".into(), 456)),
         ("123".into(), 123)
     );
 
