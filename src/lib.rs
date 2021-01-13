@@ -15,7 +15,7 @@
 //! fn example() {
 //!     let color = Color::HSV(123, 45, 67);
 //!
-//!     // boolean helper function for determining variant:
+//!     // boolean helper method for determining variant:
 //!     assert!(color.is_hsv());
 //!     assert!(!color.is_rgb());
 //!
@@ -64,7 +64,7 @@
 //!     assert!(color.is_darkness())
 //! }
 //! ```
-//! # Derived Functions
+//! # Derived Methods
 //! In the naming of all methods described here, replace the `{variant_name}` with the snake_case formatted name of the given variant.
 //!
 //! ## Option & Result Conversion
@@ -432,7 +432,7 @@
 //!     abc,
 //! }
 //! ```
-//! Without the `rename` attribute in the above, both variants would create conflicting functions such as `.is_abc()` due to the coercion to snake_case.
+//! Without the `rename` attribute in the above, both variants would create conflicting methods such as `.is_abc()` due to the coercion to snake_case.
 //! This is avoided by using the rename input to create meaningful and unique fn names.
 //!
 //! #### License

@@ -15,7 +15,7 @@ enum Color {
 fn example() {
     let color = Color::HSV(123, 45, 67);
 
-    // boolean helper function for determining variant:
+    // boolean helper method for determining variant:
     assert!(color.is_hsv());
     assert!(!color.is_rgb());
 
@@ -64,7 +64,7 @@ fn example() {
     assert!(color.is_darkness())
 }
 ```
-# Derived Functions
+# Derived Methods
 In the naming of all methods described here, replace the `{variant_name}` with the snake_case formatted name of the given variant.
 
 ## Option & Result Conversion
