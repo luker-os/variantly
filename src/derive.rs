@@ -92,6 +92,7 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
     // Generate a unique ident per type used in the variant
     let vars = generate_idents(types.len());
     let vars = quote! { (#( #vars ),*)};
+    let ref_types = quote! {(#( & #types ),*)};
     let types = quote! { (#( #types ),*)};
 
     // declare ident variables with helper macro.
@@ -130,7 +131,9 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
 
     let var_fn = &variant.used_name;
     let var_or_fn = format_ident!("{}_or", var_fn);
+    let var_ref_or_fn = format_ident!("{}_ref_or", var_fn);
     let var_or_else_fn = format_ident!("{}_or_else", var_fn);
+    let var_ref_or_else_fn = format_ident!("{}_ref_or_else", var_fn);
 
     let ok_deprecation = deprecate(var_fn);
     let ok_or_deprecation = deprecate(&var_or_fn);
@@ -150,6 +153,17 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
         }
 
         pub fn #var_or_else_fn<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
+            match self {
+                #var_pattern => Ok((#vars)),
+                _ => Err(or_else())
+            }
+        }
+
+        pub fn #var_ref_or_fn<E>(&self, or: E) -> Result<(#ref_types), E> {
+            self.#var_ref_or_else_fn(|| or)
+        }
+
+        pub fn #var_ref_or_else_fn<E, F: FnOnce() -> E>(&self, or_else: F) -> Result<(#ref_types), E> {
             match self {
                 #var_pattern => Ok((#vars)),
                 _ => Err(or_else())
