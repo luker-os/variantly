@@ -86,6 +86,22 @@ assert_eq!(None, color.rgb());
 
 *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
 
+### `pub fn {variant_name}_ref(&self) -> Option(&...)`
+If the enum is of the given variant, returns a `Some` containing a ref to the inner variant value. Otherwise, return None.
+
+#### Example
+```rust
+let color = Color::HSV(1,2,3);
+
+let option = color.hsv_ref();
+assert_eq!(Some((&1, &2, &3)), option);
+
+let color = Color::FromOutOfSpace;
+assert_eq!(None, color.rgb_ref());
+```
+
+*Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
+
 ### `pub fn {variant_name}_or<E>(self, err: E) -> Result<(...), E>`
 If the enum is of the given variant, returns a `Result::Ok` containing the inner value. Otherwise, return `Result::Err` containing `err`.
 
@@ -103,6 +119,23 @@ assert_eq!(Err("Error: Not an HSV!"), result);
 
 *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
 
+### `pub fn {variant_name}_ref_or<E>(&self, err: E) -> Result<(&...), E>`
+If the enum is of the given variant, returns a `Result::Ok` containing a ref to the inner value. Otherwise, return `Result::Err` containing `err`.
+
+#### Example
+```rust
+let color = Color::HSV(1,2,3);
+
+let result = color.hsv_ref_or("Error: Not an HSV!");
+assert_eq!(Ok((&1, &2, &3)), result);
+
+let color = Color::FromOutOfSpace;
+let result = color.hsv_ref_or("Error: Not an HSV!");
+assert_eq!(Err("Error: Not an HSV!"), result);
+```
+
+*Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
+
 ### `pub fn {variant_name}_or_else<E, F: FnOnce() -> E>(self, f: F) -> Result<(...), E>`
 If the enum is of the given variant, returns a `Result::Ok` containing the inner variant value. Otherwise, calls `f` to calculate a `Result::Err`.
 
@@ -115,6 +148,23 @@ assert_eq!(Ok((1, 2, 3)), result);
 
 let color = Color::FromOutOfSpace;
 let result = color.hsv_or_else(|| "This is an expensive error to create.");
+assert_eq!(Err("This is an expensive error to create."), result);
+```
+
+*Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
+
+### `pub fn {variant_name}_ref_or_else<E, F: FnOnce() -> E>(&self, f: F) -> Result<(&...), E>`
+If the enum is of the given variant, returns a `Result::Ok` containing a ref to the inner variant value. Otherwise, calls `f` to calculate a `Result::Err`.
+
+#### Example
+```rust
+let color = Color::HSV(1,2,3);
+
+let result = color.hsv_ref_or_else(|| "This is an expensive error to create.");
+assert_eq!(Ok((&1, &2, &3)), result);
+
+let color = Color::FromOutOfSpace;
+let result = color.hsv_ref_or_else(|| "This is an expensive error to create.");
 assert_eq!(Err("This is an expensive error to create."), result);
 ```
 
@@ -322,7 +372,7 @@ enum SomeEnum {
 }
 ```
 Without the `rename` attribute in the above, both variants would create conflicting functions such as `.is_abc()` due to the coercion to snake_case.
-This is avoided by using the rename input to create meaningful and unique fn names.
+This is avoided by using the `rename` input to create meaningful and unique fn names.
 
 #### License
 

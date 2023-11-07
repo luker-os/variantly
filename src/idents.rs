@@ -6,7 +6,8 @@ use uuid::Uuid;
 /// Declare a series of vars named by `operation` that contain an ident created
 /// by concatenating the stringified `operation`, and the passed in `ident`.
 /// # Examples
-/// ```
+/// ```ignore
+/// # use quote::format_ident;
 /// let foo = format_ident!("{}", "foo");
 /// identify!(foo, [get, and]);
 /// // Expands to:
