@@ -6,7 +6,7 @@ Derive helper methods for enum variants that are familiar from `std::option::Opt
 edition = "2018"
 license = "MIT"
 name = "variantly"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/luker-os/variantly"
 
 [dependencies]
@@ -14,8 +14,8 @@ Inflector = "^0.11.4"
 darling = "^0.11.0"
 proc-macro2 = "1.0"
 quote = "1.0"
-syn = {features = ["full"], version = "1.0"}
-uuid = {features = ["v4"], version = "^0.8.0"}
+syn = { features = ["full"], version = "1.0" }
+uuid = { features = ["v4"], version = "^0.8.0" }
 
 [lib]
 proc-macro = true
