@@ -95,6 +95,32 @@
 //!
 //! *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
 //!
+//! ### `pub fn {variant_name}_ref(&self) -> Option(&...)`
+//! If the enum is of the given variant, returns a `Some` containing a ref to the inner variant value. Otherwise, return None.
+//!
+//! #### Example
+//! ```
+//! # #[derive(variantly::Variantly, Debug, PartialEq)]
+//! # enum Color {
+//! #     RGB(u8, u8, u8),
+//! #     HSV(u8, u8, u8),
+//! #     Grey(u8),
+//! #     FromOutOfSpace,
+//! #     #[variantly(rename = "darkness")]
+//! #     Black,
+//! # }
+//!
+//! let color = Color::HSV(1,2,3);
+//!
+//! let option = color.hsv_ref();
+//! assert_eq!(Some((&1, &2, &3)), option);
+//!
+//! let color = Color::FromOutOfSpace;
+//! assert_eq!(None, color.rgb_ref());
+//! ```
+//!
+//! *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
+//!
 //! ### `pub fn {variant_name}_or<E>(self, err: E) -> Result<(...), E>`
 //! If the enum is of the given variant, returns a [`Result::Ok`] containing the inner value. Otherwise, return [`Result::Err`] containing `err`.
 //!
@@ -121,6 +147,32 @@
 //!
 //! *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
 //!
+//! ### `pub fn {variant_name}_ref_or<E>(&self, err: E) -> Result<(&...), E>`
+//! If the enum is of the given variant, returns a `Result::Ok` containing a ref to the inner value. Otherwise, return `Result::Err` containing `err`.
+//!
+//! #### Example
+//! ```
+//! # #[derive(variantly::Variantly, Debug, PartialEq)]
+//! # enum Color {
+//! #     RGB(u8, u8, u8),
+//! #     HSV(u8, u8, u8),
+//! #     Grey(u8),
+//! #     FromOutOfSpace,
+//! #     #[variantly(rename = "darkness")]
+//! #     Black,
+//! # }
+//! let color = Color::HSV(1,2,3);
+//!
+//! let result = color.hsv_ref_or("Error: Not an HSV!");
+//! assert_eq!(Ok((&1, &2, &3)), result);
+//!
+//! let color = Color::FromOutOfSpace;
+//! let result = color.hsv_ref_or("Error: Not an HSV!");
+//! assert_eq!(Err("Error: Not an HSV!"), result);
+//! ```
+//!
+//! *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
+//!
 //! ### `pub fn {variant_name}_or_else<E, F: FnOnce() -> E>(self, f: F) -> Result<(...), E>`
 //! If the enum is of the given variant, returns a [`Result::Ok`] containing the inner variant value. Otherwise, calls `f` to calculate a [`Result::Err`].
 //!
@@ -142,6 +194,32 @@
 //!
 //! let color = Color::FromOutOfSpace;
 //! let result = color.hsv_or_else(|| "This is an expensive error to create.");
+//! assert_eq!(Err("This is an expensive error to create."), result);
+//! ```
+//!
+//! *Note: Available only for tuple-style variants such as Color::RGB(200, 40, 180), or Color::Grey(10)*
+//!
+//! ### `pub fn {variant_name}_ref_or_else<E, F: FnOnce() -> E>(&self, f: F) -> Result<(&...), E>`
+//! If the enum is of the given variant, returns a `Result::Ok` containing a ref to the inner variant value. Otherwise, calls `f` to calculate a `Result::Err`.
+//!
+//! #### Example
+//! ```
+//! # #[derive(variantly::Variantly, Debug, PartialEq)]
+//! # enum Color {
+//! #     RGB(u8, u8, u8),
+//! #     HSV(u8, u8, u8),
+//! #     Grey(u8),
+//! #     FromOutOfSpace,
+//! #     #[variantly(rename = "darkness")]
+//! #     Black,
+//! # }
+//! let color = Color::HSV(1,2,3);
+//!
+//! let result = color.hsv_ref_or_else(|| "This is an expensive error to create.");
+//! assert_eq!(Ok((&1, &2, &3)), result);
+//!
+//! let color = Color::FromOutOfSpace;
+//! let result = color.hsv_ref_or_else(|| "This is an expensive error to create.");
 //! assert_eq!(Err("This is an expensive error to create."), result);
 //! ```
 //!
