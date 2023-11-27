@@ -6,7 +6,7 @@ Derive helper methods for enum variants that are familiar from `std::option::Opt
 edition = "2018"
 license = "MIT"
 name = "variantly"
-version = "0.3.0"
+version = "0.4.0"
 repository = "https://github.com/luker-os/variantly"
 
 [dependencies]
