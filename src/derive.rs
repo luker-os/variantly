@@ -149,61 +149,61 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
 
     // Create and push actual impl functions
     functions.push(quote! {
-        pub fn #var_fn(self) -> Option<(#types)> {
+        pub fn #var_fn(self) -> std::option::Option<(#types)> {
             match self {
-                #var_pattern => Some((#vars)),
-                _ => None,
+                #var_pattern => std::option::Option::Some((#vars)),
+                _ => std::option::Option::None,
             }
         }
 
-        pub fn #var_ref_fn(&self) -> Option<(#ref_types)> {
+        pub fn #var_ref_fn(&self) -> std::option::Option<(#ref_types)> {
             match self {
-                #var_pattern => Some((#vars)),
-                _ => None,
+                #var_pattern => std::option::Option::Some((#vars)),
+                _ => std::option::Option::None,
             }
         }
 
-        pub fn #var_mut_fn(&mut self) -> Option<(#mut_types)> {
+        pub fn #var_mut_fn(&mut self) -> std::option::Option<(#mut_types)> {
             match self {
-                #var_pattern => Some((#vars)),
-                _ => None,
+                #var_pattern => std::option::Option::Some((#vars)),
+                _ => std::option::Option::None,
             }
         }
 
-        pub fn #var_or_fn<E>(self, or: E) -> Result<(#types), E> {
+        pub fn #var_or_fn<E>(self, or: E) -> std::result::Result<(#types), E> {
             self.#var_or_else_fn(|| or)
         }
 
-        pub fn #var_or_else_fn<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
+        pub fn #var_or_else_fn<E, F: std::ops::FnOnce() -> E>(self, or_else: F) -> std::result::Result<(#types), E> {
             match self {
-                #var_pattern => Ok((#vars)),
-                _ => Err(or_else())
+                #var_pattern => std::result::Result::Ok((#vars)),
+                _ => std::result::Result::Err(or_else())
             }
         }
 
-        pub fn #var_ref_or_fn<E>(&self, or: E) -> Result<(#ref_types), E> {
+        pub fn #var_ref_or_fn<E>(&self, or: E) -> std::result::Result<(#ref_types), E> {
             self.#var_ref_or_else_fn(|| or)
         }
 
-        pub fn #var_mut_or_fn<E>(&mut self, or: E) -> Result<(#mut_types), E> {
+        pub fn #var_mut_or_fn<E>(&mut self, or: E) -> std::result::Result<(#mut_types), E> {
             self.#var_mut_or_else_fn(|| or)
         }
 
-        pub fn #var_ref_or_else_fn<E, F: FnOnce() -> E>(&self, or_else: F) -> Result<(#ref_types), E> {
+        pub fn #var_ref_or_else_fn<E, F: std::ops::FnOnce() -> E>(&self, or_else: F) -> std::result::Result<(#ref_types), E> {
             match self {
-                #var_pattern => Ok((#vars)),
-                _ => Err(or_else())
+                #var_pattern => std::result::Result::Ok((#vars)),
+                _ => std::result::Result::Err(or_else())
             }
         }
 
-        pub fn #var_mut_or_else_fn<E, F: FnOnce() -> E>(&mut self, or_else: F) -> Result<(#mut_types), E> {
+        pub fn #var_mut_or_else_fn<E, F: std::ops::FnOnce() -> E>(&mut self, or_else: F) -> std::result::Result<(#mut_types), E> {
             match self {
-                #var_pattern => Ok((#vars)),
-                _ => Err(or_else())
+                #var_pattern => std::result::Result::Ok((#vars)),
+                _ => std::result::Result::Err(or_else())
             }
         }
 
-        pub fn #and_then<F: FnOnce((#types)) -> (#types)>(self, and_then: F) -> Self {
+        pub fn #and_then<F: std::ops::FnOnce((#types)) -> (#types)>(self, and_then: F) -> Self {
             match self {
                 #var_pattern => {
                     let #vars = and_then(#vars);
@@ -214,25 +214,25 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
         }
 
         pub fn #expect(self, msg: &str) -> (#types) {
-            self.#unwrap_or_else(|| panic!("{}", msg))
+            self.#unwrap_or_else(|| std::panic!("{}", msg))
         }
 
         #ok_deprecation
-        pub fn #ok(self) -> Option<(#types)> {
+        pub fn #ok(self) -> std::option::Option<(#types)> {
             self.#var_fn()
         }
 
         #ok_or_deprecation
-        pub fn #ok_or<E>(self, or: E) -> Result<(#types), E> {
+        pub fn #ok_or<E>(self, or: E) -> std::result::Result<(#types), E> {
             self.#var_or_fn(or)
         }
 
         #ok_or_else_deprecation
-        pub fn #ok_or_else<E, F: FnOnce() -> E>(self, or_else: F) -> Result<(#types), E> {
+        pub fn #ok_or_else<E, F: std::ops::FnOnce() -> E>(self, or_else: F) -> std::result::Result<(#types), E> {
             self.#var_or_else_fn(or_else)
         }
 
-        pub fn #or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> Self {
+        pub fn #or_else<F: std::ops::FnOnce() -> (#types)>(self, or_else: F) -> Self {
             match self {
                 #var_pattern => #var_pattern,
                 _ => {
@@ -243,14 +243,14 @@ fn handle_tuple(variant: &VariantParsed, functions: &mut Vec<TokenStream2>, enum
         }
 
         pub fn #unwrap(self) -> (#types) {
-            self.#unwrap_or_else(|| panic!())
+            self.#unwrap_or_else(|| std::panic!())
         }
 
         pub fn #unwrap_or(self, or: (#types)) -> (#types) {
             self.#unwrap_or_else(|| or)
         }
 
-        pub fn #unwrap_or_else<F: FnOnce() -> (#types)>(self, or_else: F) -> (#types) {
+        pub fn #unwrap_or_else<F: std::ops::FnOnce() -> (#types)>(self, or_else: F) -> (#types) {
             match self {
                 #var_pattern => (#vars),
                 _ => or_else()
