@@ -22,16 +22,16 @@ pub fn derive_variantly_fns(item_enum: ItemEnum) -> Result<TokenStream> {
 
     variants.iter().for_each(|variant| {
         // This will be initialized with a tokenstream representing how to match & ignore any variables held by a variant.
-        let ignore;
+
         let ident = &variant.ident;
-        match &variant.fields.style {
+        let ignore = match &variant.fields.style {
             Tuple => {
-                handle_tuple(&variant, &mut functions, &enum_name);
-                ignore = quote!((..));
+                handle_tuple(variant, &mut functions, enum_name);
+                quote!((..))
             }
-            Struct => ignore = quote!({ .. }),
-            Unit => ignore = quote!(),
-        }
+            Struct => quote!({ .. }),
+            Unit => quote!(),
+        };
 
         // include any impl functions that are common to all variant types.
         identify!(variant.used_name, [is, is_not, and, or]);

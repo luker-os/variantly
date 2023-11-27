@@ -11,7 +11,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn to_compile_error(self) -> TokenStream {
+    pub fn into_compile_error(self) -> TokenStream {
         match self {
             Error::Syn(err) => err.to_compile_error().into(),
             Error::Darling(err) => err.write_errors().into(),
