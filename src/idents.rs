@@ -1,4 +1,4 @@
-///! Parse or generate idents.
+//! Parse or generate idents.
 use quote::format_ident;
 use syn::Ident;
 use uuid::Uuid;
